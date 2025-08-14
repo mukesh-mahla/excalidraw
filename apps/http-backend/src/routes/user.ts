@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken"
 import  {JWT_SECERET}  from "@repo/backend-common/config";
 import { userAuth } from "../middleware";
 import {CreateUserSchema,CreateSigninSchema} from "@repo/common/types"
+import {prisma} from "@repo/db/client"
 
 userRouter.post("/signup",async(req,res)=>{
     const result = CreateUserSchema.safeParse(req.body)

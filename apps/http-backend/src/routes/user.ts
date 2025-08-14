@@ -18,8 +18,12 @@ userRouter.post("/signup",async(req,res)=>{
     }
     const hashPassword = await bcrypt.hash(Password,10)
   
-    const user =await User.create({
-        userName,email,Password:hashPassword
+   await prisma.user.create({
+        data:{
+            userName,
+            email,
+            Password:hashPassword
+        }
     })
 
     return res.json({msg:"signed up succesfully"})
@@ -35,13 +39,15 @@ userRouter.post("/signin",async(req,res)=>{
     if( !email || !Password){
         return res.json({msg:"incomplete credential"})
     }
-      const user =await User.findOne({email})
+      const user =await prisma.user.findUnique({
+        where:{email}
+    })
 
       if(!user){return res.json({msg:"user not found"})}
 
      const password = await bcrypt.compare(Password,user.Password)
       if(password){
-             const token = jwt.sign({id:user._id},JWT_SECERET)
+             const token = jwt.sign({id:user.id},JWT_SECERET)
              return res.json({msg:"signed in succesfully",token:token})
         }
         else{

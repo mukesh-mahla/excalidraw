@@ -1,0 +1,1 @@
+export const  JWT_SECERET = process.env.JWT_SECERET || "user@123"

@@ -1,15 +1,16 @@
-import { Router } from "express";
+import express, { Router }  from "express";
 import bcrypt from "bcrypt"
-const userRouter = Router()
+const userRouter:Router = express.Router()
 import jwt from "jsonwebtoken"
 import  {JWT_SECERET}  from "@repo/backend-common/config";
 import { userAuth } from "../middleware";
-import {CreateUserSchema,CreateSigninSchema} from "@repo/common/types"
+import {CreateUserSchema,CreateSigninSchema,CreateRoomSchema} from "@repo/common/types"
 import {prisma} from "@repo/db/client"
 
 userRouter.post("/signup",async(req,res)=>{
     const result = CreateUserSchema.safeParse(req.body)
     if(result.error){
+        console.log(result.error)
         return res.json({msg:"wrong credential"})
     }
     const {userName,email,Password} = result.data
@@ -17,8 +18,8 @@ userRouter.post("/signup",async(req,res)=>{
         return res.json({msg:"incomplete credential"})
     }
     const hashPassword = await bcrypt.hash(Password,10)
-  
-   await prisma.user.create({
+  try{
+  const user = await prisma.user.create({
         data:{
             userName,
             email,
@@ -26,7 +27,10 @@ userRouter.post("/signup",async(req,res)=>{
         }
     })
 
-    return res.json({msg:"signed up succesfully"})
+    return res.json({msg:"signed up succesfully",userId:user.id})
+}catch(e){
+    res.status(411).json({message:"user already exixt"})
+}
 
 })
 
@@ -56,6 +60,26 @@ userRouter.post("/signin",async(req,res)=>{
 
 })
 
-userRouter.post("/room",userAuth,(req,res)=>{
-res.json({roomId:123})
-})
+userRouter.post("/room",userAuth,async(req,res)=>{
+    const result = CreateRoomSchema.safeParse(req.body)
+    if(!result.success){
+        console.log(result.error)
+        return res.json({msg:"wrong credential"})
+    } 
+             //@ts-ignore
+         const userId = req.userId
+         try{
+        const room = await prisma.room.create({
+            data:{
+             slug:result.data.name,
+             adminId:userId
+            }
+         })
+
+           res.json({roomId:room.id})
+        }catch(e){
+            res.json({mag:"room already exist"})
+        }
+        })
+
+export default userRouter

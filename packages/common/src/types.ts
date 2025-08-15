@@ -8,11 +8,9 @@ export const CreateUserSchema = z.object({
 })
 
 export const CreateSigninSchema = z.object({
-    
      email:z.email(),
       Password:z.string().min(6).max(20)
 })
 export const CreateRoomSchema = z.object({
-    
-      name:z.string().min(6).max(20)
+      slug:z.string().min(6).max(20)
 })

@@ -71,7 +71,7 @@ userRouter.post("/room",userAuth,async(req,res)=>{
          try{
         const room = await prisma.room.create({
             data:{
-             slug:result.data.name,
+             slug:result.data.slug,
              adminId:userId
             }
          })
@@ -82,4 +82,18 @@ userRouter.post("/room",userAuth,async(req,res)=>{
         }
         })
 
+
+        userRouter.get("/chats/:roomId",async(req,res)=>{
+            const roomId = Number(req.params.roomId)
+            const message = await prisma.chat.findMany({
+                where:{
+                    roomId:roomId
+                },
+                orderBy:{
+                    id:"desc"
+                },
+                take:50
+            })
+            res.json({message})
+        })
 export default userRouter

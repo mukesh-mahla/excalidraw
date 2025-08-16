@@ -96,4 +96,15 @@ userRouter.post("/room",userAuth,async(req,res)=>{
             })
             res.json({message})
         })
+
+        
+        userRouter.get("/chats/:slug",async(req,res)=>{
+            const slug = req.params.slug
+            const room = await prisma.room.findFirst({
+                where:{
+                    slug
+                }
+            })
+            res.json({room})
+        })
 export default userRouter

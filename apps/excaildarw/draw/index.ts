@@ -1,3 +1,6 @@
+import { HTTP_BACKEND } from "@/config"
+import axios from "axios"
+
 type shape ={
     type : "rect",
     x : number,
@@ -6,49 +9,77 @@ type shape ={
     height:number
 
 } | {
-    type : "circule",
+    type : "circle",
     centerX:number,
     centerY:number,
     radius:number
 }
 
 
-export default function initDraw(canvas:HTMLCanvasElement){
+export default async function initDraw(canvas:HTMLCanvasElement,roomId:string,socket:WebSocket){
 
-  let exsistinShape:shape[]  =[]
+  let exsistinShape:shape[]  = await getExistingShape(roomId)
     
                   const ctx = canvas.getContext("2d")
 
                     if(!ctx){
                       return
                       }
-                                ctx.fillStyle="rgba(0,0,0)"
-                            ctx.fillRect(0,0,canvas.width,canvas.height)
 
+                      socket.onmessage = (event)=>{
+                        const message = JSON.parse(event.data)
+                        if(message.type == "chat"){
+                               const parsedShape = message.message
+                               exsistinShape.push(parsedShape)
+                           clearCtx(ctx,canvas,exsistinShape)
+                        }
+                      }
+                              clearCtx(ctx,canvas,exsistinShape)
                       let click = false
                       let startX = 0
                       let startY = 0
                    canvas.addEventListener("mousedown",(e)=>{
                     click = true
-                                  startX = e.clientX
-                                  startY = e.clientY
+                     const rect = canvas.getBoundingClientRect();
+     
+
+                                  startX = e.clientX- rect.left;
+                                  startY = e.clientY - rect.top;
+
                    })
                    canvas.addEventListener("mouseup",(e)=>{
                     click = false
                                   console.log(e.clientX)
-                                     const width = e.clientX-startX
-                        const height = e.clientY-startY
-                                  exsistinShape.push({type:"rect",
-                                    x:startX,
-                                    y:startY,
-                                    width,
-                                    height
+                                  const rect = canvas.getBoundingClientRect();
+                                    const endX = e.clientX- rect.left
+                                    const endY = e.clientY-rect.top
+
+                                     const width = endX-startX
+                                     const height = endY-startY
+                                     const shape:shape = {
+                                      type:"rect",
+                                      x:startX,
+                                      y:startY,
+                                      width,
+                                      height
+                                     }
+                                  exsistinShape.push(shape)
+
+                                  socket.send(JSON.stringify({
+                                    type:"chat",
+                                    message:JSON.stringify({shape}),
+                                    roomId
                                   })
+                                    
+                                    )
                    })
                    canvas.addEventListener("mousemove",(e)=>{
                     if(click){
-                        const width = e.clientX-startX
-                        const height = e.clientY-startY
+                       const rect = canvas.getBoundingClientRect();
+    const currentX = e.clientX - rect.left;
+    const currentY = e.clientY - rect.top;
+                        const width = currentX-startX
+                        const height = currentY-startY
                                   clearCtx(ctx,canvas,exsistinShape)
                        
                         ctx.strokeStyle="rgba(255,255,255)"
@@ -68,4 +99,16 @@ function clearCtx(ctx:CanvasRenderingContext2D,canvas:HTMLCanvasElement,exsistin
                          ctx.strokeRect(shape.x,shape.y,shape.width,shape.height)
                           }
                         })
+}
+
+async function getExistingShape(roomId:string){
+  const res = await axios.get(`${HTTP_BACKEND}/chats/${roomId}`)
+  const messages = res.data.message
+
+  const shapes = messages.map((x:{message:string})=>{
+           const messageData = JSON.parse(x.message)
+           return messageData.shape
+  })
+return shapes
+
 }

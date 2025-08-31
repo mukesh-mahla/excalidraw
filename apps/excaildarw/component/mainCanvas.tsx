@@ -1,9 +1,17 @@
 import initDraw from "@/draw"
-import { useEffect, useRef } from "react"
+import { Circle, Pencil, RectangleHorizontalIcon } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { ButtonIcon } from "./buttonIcon"
+type shape = "pencil" | "rect" | "circle"
 
 export function MainCanvas({roomId,socket}:{roomId:string,socket:WebSocket}){
     const canvasRef = useRef<HTMLCanvasElement>(null)
+    const [selectedTool,setSelectedTool] = useState<shape>("circle")
 
+    useEffect(()=>{
+        //@ts-ignore
+      window.selectedTool = selectedTool
+    },[selectedTool])
 
      useEffect(()=>{
 
@@ -14,11 +22,16 @@ export function MainCanvas({roomId,socket}:{roomId:string,socket:WebSocket}){
   }
                  },[canvasRef])
 
-    return <div>
+    return <div className="h-screen w-screen overflow-hidden">
         <canvas ref={canvasRef} width={2000} height={1000}></canvas>
-        <div className="fixed bottom-0 right-0">
-            <button className="bg-white text-black">rect</button>
-            <button className="bg-white text-black">circle</button>
-        </div>
+       <Topbar selectedTool={selectedTool} setSelectedTool={setSelectedTool}/>
     </div>
+}
+
+function Topbar({selectedTool,setSelectedTool}:{selectedTool:shape,setSelectedTool:(s:shape)=>void}){
+    return  <div className="fixed top-0 left-0 flex gap-2">
+             <ButtonIcon activated={selectedTool === "pencil"} icon={<Pencil/>} onclick={()=>{setSelectedTool("pencil")}}/>
+             <ButtonIcon activated={selectedTool === "rect"} icon={<RectangleHorizontalIcon/>} onclick={()=>{setSelectedTool("rect")}}/>
+             <ButtonIcon activated={selectedTool === "circle"} icon={<Circle/>} onclick={()=>{setSelectedTool("circle")}}/>
+        </div>
 }

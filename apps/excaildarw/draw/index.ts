@@ -1,6 +1,7 @@
 import { HTTP_BACKEND } from "@/config"
 import axios from "axios"
 
+
 type shape ={
     type : "rect",
     x : number,
@@ -12,7 +13,9 @@ type shape ={
     type : "circle",
     centerX:number,
     centerY:number,
-    radius:number
+    radius:number,
+    startAngle:number,
+    endAngle:number
 }
 
 
@@ -29,7 +32,7 @@ export default async function initDraw(canvas:HTMLCanvasElement,roomId:string,so
                       socket.onmessage = (event)=>{
                         const message = JSON.parse(event.data)
                         if(message.type == "chat"){
-                               const parsedShape = message.message
+                               const parsedShape = message.message.shape
                                exsistinShape.push(parsedShape)
                            clearCtx(ctx,canvas,exsistinShape)
                         }
@@ -48,57 +51,99 @@ export default async function initDraw(canvas:HTMLCanvasElement,roomId:string,so
 
                    })
                    canvas.addEventListener("mouseup",(e)=>{
-                    click = false
-                                  console.log(e.clientX)
-                                  const rect = canvas.getBoundingClientRect();
-                                    const endX = e.clientX- rect.left
-                                    const endY = e.clientY-rect.top
+                        click = false
+                         const width = e.clientX - startX;
+                         const height = e.clientY - startY;
 
-                                     const width = endX-startX
-                                     const height = endY-startY
-                                     const shape:shape = {
-                                      type:"rect",
-                                      x:startX,
-                                      y:startY,
-                                      width,
-                                      height
-                                     }
-                                  exsistinShape.push(shape)
+                        // @ts-ignore
+                          const selectedTool = window.selectedTool;
+                            let shape: shape | null = null;
+                            if (selectedTool === "rect") {
 
-                                  socket.send(JSON.stringify({
-                                    type:"chat",
-                                    message:JSON.stringify({shape}),
-                                    roomId
-                                  })
-                                    
-                                    )
+                        shape = {
+                              type: "rect",
+                               x: startX,
+                               y: startY,
+                                height,
+                                  width
+                             }
+                      } else if (selectedTool === "circle") {
+                           const  radius = Math.max(Math.abs(width),Math.abs(height)) /2
+                          const centerX = startX + width / 2
+                      const centerY = startY + height / 2
+                          shape = {
+                              type: "circle",
+                              radius: radius,
+                              centerX: centerX,
+                              centerY: centerY,
+                              startAngle:0,
+                              endAngle:Math.PI*2
+                          }
+                      }
+
+                    if (!shape) {
+                        return;
+                    }
+
+                     exsistinShape.push(shape);
+                     clearCtx(ctx,canvas,exsistinShape)
+             
+                     socket.send(JSON.stringify({
+                         type: "chat",
+                         message: {
+                             shape
+                         },
+                         roomId
+                     }))
+
                    })
                    canvas.addEventListener("mousemove",(e)=>{
                     if(click){
                        const rect = canvas.getBoundingClientRect();
-    const currentX = e.clientX - rect.left;
-    const currentY = e.clientY - rect.top;
-                        const width = currentX-startX
-                        const height = currentY-startY
-                                  clearCtx(ctx,canvas,exsistinShape)
-                       
+                       const currentX = e.clientX - rect.left;
+                       const currentY = e.clientY - rect.top;
+                       const width = currentX-startX
+                       const height = currentY-startY
+                        clearCtx(ctx,canvas,exsistinShape)
                         ctx.strokeStyle="rgba(255,255,255)"
+                        //@ts-ignore
+                        const selectedTool = window.selectedTool
+                      if(selectedTool === "rect"){
+                      
                          ctx.strokeRect(startX,startY,width,height)
+                         
+                         
+                    }else if(selectedTool === "circle"){
+                      const centerX = startX + width / 2
+                      const centerY = startY + height / 2
+                      const  radius = Math.max(Math.abs(width),Math.abs(height)) /2
+                      ctx.beginPath()
+                      ctx.arc(centerX,centerY,radius,0,Math.PI*2)
+                      
+                      ctx.stroke()
+                      ctx.closePath()
                     }
+                  }
                    })
 }
 
 function clearCtx(ctx:CanvasRenderingContext2D,canvas:HTMLCanvasElement,exsistinShape:shape[]){
- ctx.clearRect(0,0,canvas.width,canvas.height)
-                         ctx.fillStyle="rgba(0,0,0)"
-                        ctx.fillRect(0,0,canvas.width,canvas.height)
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgba(0, 0, 0)"
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                        exsistinShape.map((shape)=>{
-                          if(shape.type === "rect"){
-                             ctx.strokeStyle="rgba(255,255,255)"
-                         ctx.strokeRect(shape.x,shape.y,shape.width,shape.height)
-                          }
-                        })
+    exsistinShape.map((shape) => {
+      if (!shape) return; // skip undefined
+        if (shape.type === "rect") {
+            ctx.strokeStyle = "rgba(255, 255, 255)"
+            ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
+        } else if (shape.type === "circle") {
+            ctx.beginPath();
+            ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.closePath();                
+        }
+    })
 }
 
 async function getExistingShape(roomId:string){

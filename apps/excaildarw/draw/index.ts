@@ -16,6 +16,15 @@ type shape ={
     radius:number,
     startAngle:number,
     endAngle:number
+} | {
+  type : "line",
+  startx:number,
+  starty:number,
+  endx:number,
+  endy:number
+} | {
+  type: "pencil",
+  points: { x: number; y: number }[]
 }
 
 
@@ -38,16 +47,23 @@ export default async function initDraw(canvas:HTMLCanvasElement,roomId:string,so
                         }
                       }
                               clearCtx(ctx,canvas,exsistinShape)
-                      let click = false
-                      let startX = 0
-                      let startY = 0
-                   canvas.addEventListener("mousedown",(e)=>{
-                    click = true
-                     const rect = canvas.getBoundingClientRect();
+                                 let click = false
+                                 let startX = 0
+                                 let startY = 0
+
+                                 let currentPoints: {x:number, y:number}[] = [];
+
+                      canvas.addEventListener("mousedown",(e)=>{
+                       click = true
+                        const rect = canvas.getBoundingClientRect();
      
 
                                   startX = e.clientX- rect.left;
                                   startY = e.clientY - rect.top;
+                                  //@ts-ignore
+                                  if(window.selectedTool === "pencil"){
+                                    currentPoints = [{x:startX,y:startY}]
+                                  }
 
                    })
                    canvas.addEventListener("mouseup",(e)=>{
@@ -65,7 +81,7 @@ export default async function initDraw(canvas:HTMLCanvasElement,roomId:string,so
                                x: startX,
                                y: startY,
                                 height,
-                                  width
+                                width
                              }
                       } else if (selectedTool === "circle") {
                            const  radius = Math.max(Math.abs(width),Math.abs(height)) /2
@@ -79,7 +95,22 @@ export default async function initDraw(canvas:HTMLCanvasElement,roomId:string,so
                               startAngle:0,
                               endAngle:Math.PI*2
                           }
-                      }
+                      } else if (selectedTool === "line") {
+                          const rect = canvas.getBoundingClientRect();
+                        shape = {
+                         type: "line",
+                         startx:startX,
+                        starty: startY,
+                         endx: e.clientX - rect.left,
+                         endy: e.clientY - rect.top
+                     };
+                  } else if(selectedTool === "pencil"){
+                             shape = {
+                               type:"pencil",
+                               points: currentPoints
+                             };
+                             currentPoints = []; // reset after saving
+                           }
 
                     if (!shape) {
                         return;
@@ -122,7 +153,27 @@ export default async function initDraw(canvas:HTMLCanvasElement,roomId:string,so
                       
                       ctx.stroke()
                       ctx.closePath()
-                    }
+                    }else if(selectedTool === "line"){
+                      
+                      ctx.beginPath()
+                          
+                          
+                          ctx.moveTo(startX,startY)
+                          ctx.lineTo(currentX,currentY)
+                          
+                          ctx.stroke()
+                          ctx.closePath()
+
+                    }else if(selectedTool === "pencil"){
+                        currentPoints.push({x:currentX, y:currentY});
+                        ctx.beginPath();
+                        ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
+                        for (let i=1; i<currentPoints.length; i++){
+                          ctx.lineTo(currentPoints[i].x, currentPoints[i].y);
+                        }
+                        ctx.stroke();
+                        ctx.closePath();
+                      }
                   }
                    })
 }
@@ -142,7 +193,21 @@ function clearCtx(ctx:CanvasRenderingContext2D,canvas:HTMLCanvasElement,exsistin
             ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
             ctx.stroke();
             ctx.closePath();                
-        }
+        }else if(shape.type ==="line"){
+          ctx.beginPath()
+          ctx.moveTo(shape.startx,shape.starty)
+          ctx.lineTo(shape.endx,shape.endy)
+          ctx.stroke()
+          ctx.closePath()
+        }else if(shape.type === "pencil"){
+               ctx.beginPath();
+               ctx.moveTo(shape.points[0].x, shape.points[0].y);
+               for (let i=1; i<shape.points.length; i++){
+                 ctx.lineTo(shape.points[i].x, shape.points[i].y);
+               }
+               ctx.stroke();
+               ctx.closePath();
+             }
     })
 }
 

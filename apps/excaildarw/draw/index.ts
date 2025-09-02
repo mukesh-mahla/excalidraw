@@ -7,7 +7,8 @@ type shape ={
     x : number,
     y : number,
     width:number,
-    height:number
+    height:number,
+    
 
 } | {
     type : "circle",
@@ -15,22 +16,27 @@ type shape ={
     centerY:number,
     radius:number,
     startAngle:number,
-    endAngle:number
+    endAngle:number,
+     
 } | {
   type : "line",
   startx:number,
   starty:number,
   endx:number,
-  endy:number
+  endy:number,
+   
 } | {
   type: "pencil",
-  points: { x: number; y: number }[]
+  points: { x: number; y: number }[],
+   
 }
-
 
 export default async function initDraw(canvas:HTMLCanvasElement,roomId:string,socket:WebSocket){
 
-  let exsistinShape:shape[]  = await getExistingShape(roomId)
+                  let exsistinShape:shape[]  = await getExistingShape(roomId)
+                  
+                  let undoShape:shape[][] = []
+                  let redoShape:shape[][] = []
     
                   const ctx = canvas.getContext("2d")
 
@@ -52,6 +58,7 @@ export default async function initDraw(canvas:HTMLCanvasElement,roomId:string,so
                                  let startY = 0
 
                                  let currentPoints: {x:number, y:number}[] = [];
+                               
 
                       canvas.addEventListener("mousedown",(e)=>{
                        click = true
@@ -109,14 +116,15 @@ export default async function initDraw(canvas:HTMLCanvasElement,roomId:string,so
                                type:"pencil",
                                points: currentPoints
                              };
-                             currentPoints = []; // reset after saving
+                             currentPoints = []; 
                            }
 
                     if (!shape) {
                         return;
                     }
-
-                     exsistinShape.push(shape);
+                        saveState(exsistinShape)
+                        exsistinShape.push(shape);
+                   
                      clearCtx(ctx,canvas,exsistinShape)
              
                      socket.send(JSON.stringify({
@@ -173,9 +181,37 @@ export default async function initDraw(canvas:HTMLCanvasElement,roomId:string,so
                         }
                         ctx.stroke();
                         ctx.closePath();
-                      }
+                      } 
                   }
                    })
+
+                    function undo() {
+    if (undoShape.length === 0) return
+    redoShape.push([...exsistinShape.map((s) => ({ ...s }))])
+    const prev = undoShape.pop()
+    if (prev) {
+      exsistinShape = [...prev]
+      clearCtx(ctx!, canvas, exsistinShape)
+    }
+  }
+
+  // Redo function
+  function redo() {
+    if (redoShape.length === 0) return
+    undoShape.push([...exsistinShape.map((s) => ({ ...s }))])
+    const next = redoShape.pop()
+    if (next) {
+      exsistinShape = [...next]
+      clearCtx(ctx!, canvas, exsistinShape)
+    }
+  }
+
+  // Save current state to undo
+  function saveState(existingShapes: shape[]) {
+    undoShape.push([...existingShapes.map((s) => ({ ...s }))])
+    redoShape = []
+  }
+  return {undo,redo}
 }
 
 function clearCtx(ctx:CanvasRenderingContext2D,canvas:HTMLCanvasElement,exsistinShape:shape[]){
@@ -209,6 +245,9 @@ function clearCtx(ctx:CanvasRenderingContext2D,canvas:HTMLCanvasElement,exsistin
                ctx.closePath();
              }
     })
+
+        
+
 }
 
 async function getExistingShape(roomId:string){
@@ -222,3 +261,4 @@ async function getExistingShape(roomId:string){
 return shapes
 
 }
+

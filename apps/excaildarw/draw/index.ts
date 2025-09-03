@@ -1,7 +1,5 @@
 import { HTTP_BACKEND } from "@/config"
 import axios from "axios"
-
-
 type shape ={
     type : "rect",
     x : number,
@@ -245,9 +243,6 @@ function clearCtx(ctx:CanvasRenderingContext2D,canvas:HTMLCanvasElement,exsistin
                ctx.closePath();
              }
     })
-
-        
-
 }
 
 async function getExistingShape(roomId:string){

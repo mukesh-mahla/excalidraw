@@ -18,14 +18,12 @@ export function MainCanvas({roomId,socket}:{roomId:string,socket:WebSocket}){
     const [redo,setRedo] = useState()
 
      useEffect(()=>{
-
     if(canvasRef.current){
                   
      initDraw(canvasRef.current,roomId,socket).then(res =>{
         if(!res) return
         undoRedoRef.current = res
-     })
-                         
+     })        
   }
                  },[canvasRef])
 

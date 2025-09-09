@@ -90,14 +90,13 @@ function App() {
               <p className="mx-auto mt-6 max-w-xl text-lg text-primary-foreground/80">
                 Join thousands of users who are already creating amazing diagrams and sketches.
               </p>
-              <div className="mt-10 flex items-center justify-center gap-x-6">
+              <div className="mt-10 flex items-center justify-center gap-x-2">
                 <Button size="lg" variant="secondary" className="h-12 px-6">
                   Open Canvas
-                  <Pencil className="ml-2 h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="lg" className="h-12 px-6 bg-transparent text-primary-foreground border-primary-foreground hover:bg-primary-foreground hover:text-primary">
-                  View Gallery
-                </Button>
+                   </Button>
+                  <Pencil className=" h-4 w-4" />
+               
+               
               </div>
             </div>
           </div>
@@ -123,7 +122,7 @@ function App() {
         </div>
       </footer>
     </div>
-  );
+  )
 }
 
 export default App;

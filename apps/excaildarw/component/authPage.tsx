@@ -29,7 +29,7 @@ export default function AuthPage({isSignin,onSumbit}:{isSignin:boolean,onSumbit:
      <div className="p-2 mb-2 ">   <input ref={emailRef} className="p-2" type="text" placeholder="email" /> </div>
      <div className="p-2 mb-2 ">   <input ref={passwordRef} className="p-2" type="text" placeholder="password" /> </div>
      <div className="p-2 flex justify-center border-2 rounded">   
-      <Link href="/"> <button className=" px-2" onClick={handelClick}>{isSignin ? "signin":"signup"}</button></Link>
+       <button className=" px-2" onClick={handelClick}>{isSignin ? "signin":"signup"}</button>
  </div>  
 </div>
       </div>
@@ -40,7 +40,7 @@ export default function AuthPage({isSignin,onSumbit}:{isSignin:boolean,onSumbit:
     <div className="p-2  mb-2"> <input ref={emailRef} className="p-2" type="text" placeholder="email" />  </div>
     <div className="p-2  mb-2"> <input ref={passwordRef} className="p-2" type="text" placeholder="password" />  </div>
     <div className="p-2 flex justify-center border-2 rounded"> 
-   <Link href="/signin"> <button className=" px-2" onClick={handelClick}>{isSignin ? "signin":"signup"}</button></Link></div>
+    <button className=" px-2" onClick={handelClick}>{isSignin ? "signin":"signup"}</button></div>
 </div>
       </div>
     }

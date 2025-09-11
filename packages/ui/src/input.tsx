@@ -1,10 +1,13 @@
 "use client";
 
-function Input({  type , placeholder,  onChange }:{type:string,placeholder:string,onChange?:()=>void}) {
+import { ReactHTMLElement } from "react";
+
+function Input({  type , placeholder,  onChange,Inputref  }:{Inputref?:React.RefObject<HTMLInputElement | null> ,type:string,placeholder:string,onChange?:(e:any)=>void}) {
   return (
     <div className="flex flex-col gap-2 mb-4">
       
       <input
+       ref={Inputref}
         type={type}
         placeholder={placeholder}
         

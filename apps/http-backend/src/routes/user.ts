@@ -100,11 +100,13 @@ userRouter.post("/room",userAuth,async(req,res)=>{
         
         userRouter.get("/chats/room/:slug",async(req,res)=>{
             const slug = req.params.slug
+            
             const room = await prisma.room.findFirst({
                 where:{
                     slug
                 }
             })
-            res.json({room})
+           
+            res.json({id:room?.id})
         })
 export default userRouter

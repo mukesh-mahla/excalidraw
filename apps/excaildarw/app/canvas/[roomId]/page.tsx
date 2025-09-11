@@ -2,7 +2,7 @@
 import { Canvas } from "@/component/canvas";
 
 
-import { useEffect, useRef } from "react";
+
 
 export default async function Canvaspage({params}:{params:{
     roomId:string;

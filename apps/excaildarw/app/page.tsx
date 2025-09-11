@@ -21,9 +21,9 @@ function App() {
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Link href={"/signin"}>
-                <Button variant={"primary"} size="lg" className="h-12 px-6">
+                <Button variant={"outline"} size="lg" className="h-12 px-6">
                   Sign in
-                  <Pencil className="ml-2 h-4 w-4" />
+                  
                 </Button>
               </Link>
               <Link href="/signup">
@@ -90,14 +90,14 @@ function App() {
               <p className="mx-auto mt-6 max-w-xl text-lg text-primary-foreground/80">
                 Join thousands of users who are already creating amazing diagrams and sketches.
               </p>
-              <div className="mt-10 flex items-center justify-center gap-x-2">
+        <Link href="/room">
+              <div className="mt-10  border flex items-center justify-center ">
                 <Button size="lg" variant="secondary" className="h-12 px-6">
                   Open Canvas
                    </Button>
-                  <Pencil className=" h-4 w-4" />
-               
-               
+                  <Pencil className="   h-4 w-4" />
               </div>
+             </Link>
             </div>
           </div>
         </div>

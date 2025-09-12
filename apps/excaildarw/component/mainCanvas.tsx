@@ -36,7 +36,7 @@ export function MainCanvas({roomId, socket}: {roomId: string, socket: WebSocket}
             <canvas ref={canvasRef} width={2000} height={1000}></canvas>
              <textarea
                 ref={textInputRef}
-                className="absolute border border-gray-400 p-0 m-0 bg-transparent outline-none resize-none hidden text-white"
+                className="absolute overflow-hidden border-none p-0 m-0 bg-transparent outline-none resize-none hidden text-white"
             />
            
 

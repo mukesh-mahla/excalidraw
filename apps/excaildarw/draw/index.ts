@@ -75,51 +75,74 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomId: string
         }
          
      if (selectedTool === "text" && textInput) {
+
+        canvas.addEventListener("dblclick",(e)=>{
+
+           const  StartX = e.clientX-rect.left
+          const  StartY = e.clientY-rect.top
+
+if (!textInput.classList.contains("hidden")) {
+            return; 
+          }
+
         e.preventDefault();
         click = false; // don’t drag-draw
          
-        textInput.style.left = `${startX}px`;
-        textInput.style.top = `${startY}px`;
+        textInput.style.left = `${StartX}px`
+       textInput.style.top = `${StartY}px`
         textInput.style.font = "20px Arial";
         textInput.style.lineHeight = "20px";
         textInput.value = "";
         textInput.classList.remove("hidden");
         textInput.focus();
 
-        textInput.onblur = () => {
-            const val = textInput.value.trim();
-            if (val) {
-                const ctx = canvas.getContext("2d")!;
-                ctx.font = "20px Arial";
-                const metrics = ctx.measureText(val);
-                const ascent = metrics.actualBoundingBoxAscent || 20;
+        textInput.onblur = () => finalizeText(textInput, StartX, StartY)
+         
+        function finalizeText(
+             textInput: HTMLTextAreaElement,
+             StartX: number,
+             StartY: number
+           ) {
+             const val = textInput.value.trim();
+             if (val) {
+               const ctx = canvas.getContext("2d")!;
+               ctx.font = "20px Arial";
+               const metrics = ctx.measureText(val);
+               const ascent = metrics.actualBoundingBoxAscent || 20;
+           
+               const shape: shape = {
+                 type: "text",
+                 x: StartX,
+                 y: StartY + ascent,
+                 value: val,
+               };
+           
+               saveState(exsistinShape);
+               exsistinShape.push(shape);
+               clearCtx(ctx, canvas, exsistinShape);
+           
+               socket.send(
+                 JSON.stringify({
+                   type: "chat",
+                   message: { shape },
+                   roomId,
+                 })
+               );
+             }
+           
+             textInput.value = "";
+             textInput.classList.add("hidden");
+           }
+           
+               }
 
-                const shape: shape = {
-                    type: "text",
-                    x: startX,
-                    y: startY + ascent, 
-                    value: val
-                };
-
-                saveState(exsistinShape)
-                exsistinShape.push(shape);
-                clearCtx(ctx, canvas, exsistinShape);
-
-                socket.send(JSON.stringify({
-                    type: "chat",
-                    message: { shape },
-                    roomId
-                }));
-            }
-            textInput.value = "";
-            textInput.classList.add("hidden");
-        };
+        )
     }
-        
-    })
+                   
+               })
 
     canvas.addEventListener("mouseup", (e) => {
-        if (!click) return; // Don't process if not clicking (text tool case)
+        if (!click) return; 
         
         click = false
         const rect = canvas.getBoundingClientRect();
@@ -262,7 +285,7 @@ function clearCtx(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, exsi
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     exsistinShape.map((shape) => {
-        if (!shape) return; // skip undefined
+        if (!shape) return; 
         
         if (shape.type === "rect") {
             ctx.strokeStyle = "rgba(255, 255, 255)"

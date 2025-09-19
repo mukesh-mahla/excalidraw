@@ -20,9 +20,15 @@ importers:
 
   apps/excaildarw:
     dependencies:
+      '@types/dotenv':
+        specifier: ^8.2.3
+        version: 8.2.3
       axios:
         specifier: ^1.11.0
         version: 1.11.0
+      dotenv:
+        specifier: ^17.2.2
+        version: 17.2.2
       lucide-react:
         specifier: ^0.542.0
         version: 0.542.0(react@19.1.0)

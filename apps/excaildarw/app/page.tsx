@@ -1,33 +1,31 @@
 import { Button } from "@repo/ui/button";
 import { Card } from "@repo/ui/card";
-import { Download, Github,  Pencil, Share2, Sparkles, Users2 } from "lucide-react";
+import { Download, Github, Pencil, Share2, Sparkles, Users2 } from "lucide-react";
 import Link from "next/link";
 
 function App() {
   return (
-    
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Hero Section */}
       <header className="relative overflow-hidden">
         <div className="container mx-auto px-4 py-16 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-6xl text-foreground">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
               Collaborative Whiteboarding
               <span className="text-primary block">Made Simple</span>
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
+            <p className="mx-auto mt-4 max-w-md sm:max-w-2xl text-base sm:text-lg text-muted-foreground">
               Create, collaborate, and share beautiful diagrams and sketches with our intuitive drawing tool. 
               No sign-up required.
             </p>
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Link href={"/signin"}>
-                <Button variant={"outline"} size="lg" className="h-12 px-6">
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/signin" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto h-12 px-6">
                   Sign in
-                  
                 </Button>
               </Link>
-              <Link href="/signup">
-                <Button variant="outline" size="lg" className="h-12 px-6">
+              <Link href="/signup" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto h-12 px-6">
                   Sign up
                 </Button>
               </Link>
@@ -37,9 +35,9 @@ function App() {
       </header>
 
       {/* Features Section */}
-      <section className="py-24 bg-muted/50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/50">
+        <div className="container mx-auto">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             <Card className="p-6 border-2 hover:border-primary transition-colors">
               <div className="flex items-center gap-4">
                 <div className="p-2 rounded-lg bg-primary/10">
@@ -80,34 +78,38 @@ function App() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-primary rounded-3xl p-8 sm:p-16">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-primary-foreground sm:text-4xl">
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto">
+          <div className="bg-primary rounded-3xl p-6 sm:p-12 lg:p-16 text-center">
+            <div className="mx-auto max-w-2xl">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-primary-foreground">
                 Ready to start creating?
               </h2>
-              <p className="mx-auto mt-6 max-w-xl text-lg text-primary-foreground/80">
+              <p className="mx-auto mt-4 max-w-md sm:max-w-xl text-base sm:text-lg text-primary-foreground/80">
                 Join thousands of users who are already creating amazing diagrams and sketches.
               </p>
-        <Link href="/room">
-              <div className="mt-10  border flex items-center justify-center ">
-                <Button size="lg" variant="secondary" className="h-12 px-6">
-                  Open Canvas
-                   </Button>
-                  <Pencil className="   h-4 w-4" />
+              <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Link href="/room" className="w-full sm:w-auto">
+                  <Button
+                    size="lg"
+                    variant="secondary"
+                    className="w-full sm:w-auto h-12 px-6 flex items-center gap-2 justify-center"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Open Canvas
+                  </Button>
+                </Link>
               </div>
-             </Link>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t">
-        <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-            <p className="text-sm text-muted-foreground">
+      <footer className="border-t mt-auto">
+        <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:justify-between">
+            <p className="text-sm text-muted-foreground text-center sm:text-left">
               © 2024 Excalidraw Clone. All rights reserved.
             </p>
             <div className="flex space-x-6">
@@ -122,7 +124,7 @@ function App() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
 
 export default App;

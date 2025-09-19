@@ -1,10 +1,15 @@
 "use client"
-import { HTTP_BACKEND, WS_BACKEND } from "@/config"
+import dotenv from "dotenv"
+
 import { Button } from "@repo/ui/button"
 import Input from "@repo/ui/input"
 import axios from "axios"
 import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+
+dotenv.config()
+
+const HTTP_BACKEND = process.env.HTTP_BACKEND
 
 
 export function Room(){

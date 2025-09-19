@@ -1,8 +1,11 @@
 "use client"
+import dotenv from "dotenv"
 import AuthPage from "@/component/authPage";
-import { HTTP_BACKEND } from "@/config";
+
 import axios from "axios";
 import { useRouter } from "next/navigation";
+dotenv.config()
+const HTTP_BACKEND = process.env.HTTP_BACKEND
 
 export default function Signup(){
     const router = useRouter()

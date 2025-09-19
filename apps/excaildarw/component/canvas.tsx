@@ -1,6 +1,8 @@
 "use client"
+import dotenv from "dotenv"
+dotenv.config()
+const WS_BACKEND = process.env.WS_BACKEND
 
-import { WS_BACKEND } from "@/config"
 
 import { useEffect, useRef, useState } from "react"
 import { MainCanvas } from "./mainCanvas"

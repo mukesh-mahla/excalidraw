@@ -1,11 +1,8 @@
 import { Canvas } from "@/component/canvas";
 
-type Props = {
-  params: { roomId: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
-}
 
-export default function CanvasPage({ params }: Props) {
+
+export default  function CanvasPage({ params }: any) {
   const { roomId } = params;
   
   return <Canvas roomId={roomId} />;

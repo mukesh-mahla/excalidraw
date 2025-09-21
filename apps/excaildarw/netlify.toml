@@ -1,0 +1,6 @@
+[build]
+  command = "pnpm --filter excaildarw build"
+  publish = "apps/excaildarw/.next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

@@ -12,12 +12,12 @@ export function MainCanvas({ roomId, socket }: { roomId: string, socket: WebSock
 
     const undoRedoRef = useRef<{ undo: () => void; redo: () => void } | null>(null)
 
-    // Resize canvas dynamically (pixel-based, no scroll)
+ 
     const resizeCanvas = () => {
         const canvas = canvasRef.current
         if (canvas) {
-            canvas.width = window.innerWidth   // exact screen width
-            canvas.height = window.innerHeight // exact screen height
+            canvas.width = window.innerWidth   
+            canvas.height = window.innerHeight 
         }
     }
 
@@ -45,7 +45,7 @@ export function MainCanvas({ roomId, socket }: { roomId: string, socket: WebSock
 
     return (
         <div className="h-screen w-screen overflow-hidden">
-            {/* Do NOT add w-full/h-full here, rely on width/height in resizeCanvas */}
+            
             <canvas ref={canvasRef}></canvas>
 
             <textarea

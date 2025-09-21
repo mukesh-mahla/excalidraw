@@ -4,7 +4,7 @@ dotenv.config()
 const WS_BACKEND = process.env.WS_BACKEND
 
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect,  useState } from "react"
 import { MainCanvas } from "./mainCanvas"
 
 export function Canvas({roomId}:{roomId:string}){

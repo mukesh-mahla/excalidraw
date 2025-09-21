@@ -1,5 +1,5 @@
 "use client"
-import dotenv from "dotenv"
+
 
 import { Button } from "@repo/ui/button"
 import Input from "@repo/ui/input"
@@ -7,9 +7,9 @@ import axios from "axios"
 import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 
-dotenv.config()
 
-const HTTP_BACKEND = process.env.HTTP_BACKEND
+
+const HTTP_BACKEND = process.env.NEXT_PUBLIC_HTTP_BACKEND
 
 
 export function Room(){

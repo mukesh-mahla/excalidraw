@@ -1,11 +1,11 @@
 "use client"
-import dotenv from "dotenv"
+
 import AuthPage from "@/component/authPage";
 
 import axios from "axios";
 import { useRouter } from "next/navigation";
-dotenv.config()
-const HTTP_BACKEND = process.env.HTTP_BACKEND
+
+const HTTP_BACKEND = process.env.NEXT_PUBLIC_HTTP_BACKEND
 
 export default function Signup(){
     const router = useRouter()

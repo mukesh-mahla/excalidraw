@@ -1,9 +1,9 @@
-import dotenv from "dotenv"
+
 
 import axios from "axios"
 
-dotenv.config()
-const HTTP_BACKEND = process.env.HTTP_BACKEND
+
+const HTTP_BACKEND = process.env.NEXT_PUBLIC_HTTP_BACKEND
 
 type shape = {
     type: "rect",

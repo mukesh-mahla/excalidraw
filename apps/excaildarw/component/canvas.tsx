@@ -1,7 +1,6 @@
 "use client"
-import dotenv from "dotenv"
-dotenv.config()
-const WS_BACKEND = process.env.WS_BACKEND
+
+const WS_BACKEND = process.env.NEXT_PUBLIC_WS_BACKEND
 
 
 import { useEffect,  useState } from "react"

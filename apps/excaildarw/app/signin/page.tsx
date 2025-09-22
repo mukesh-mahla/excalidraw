@@ -12,9 +12,9 @@ const HTTP_BACKEND = process.env.NEXT_PUBLIC_HTTP_BACKEND
 export default function Signin(){
     const router = useRouter()
     return <AuthPage isSignin={true} onSumbit={async({email,password})=>{
-         const payload = {  email, Password: password }
+         
         const res = await axios.post(`${HTTP_BACKEND}/signin`,
-            payload,
+            {email, Password: password},
 
          {headers:{"Content-Type": "application/json"
     }}

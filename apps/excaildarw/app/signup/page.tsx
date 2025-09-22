@@ -13,9 +13,9 @@ export default function Signup(){
     
     const router = useRouter()
     return <AuthPage isSignin={false} onSumbit={async({userName,email,password})=>{
-        const payload = { userName, email, Password: password }
+        
         const res = await axios.post(`${HTTP_BACKEND}/signup`,
-            payload
+            {userName, email, Password: password}
         ,{
   headers: {
     "Content-Type": "application/json"

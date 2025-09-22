@@ -13,6 +13,7 @@ userRouter.post("/signup",async(req,res)=>{
         console.log(result.error)
         return res.json({msg:"wrong credential"})
     }
+    console.log("Received body:", req.body);
     const {userName,email,Password} = result.data
     if(!userName || !email || !Password){
         return res.json({msg:"incomplete credential"})
@@ -29,7 +30,7 @@ userRouter.post("/signup",async(req,res)=>{
 
     return res.json({msg:"signed up succesfully",userId:user.id})
 }catch(e){
-    res.status(411).json({message:"user already exixt"})
+    res.status(400).json({message:"something is wrong"})
 }
 
 })
@@ -39,6 +40,7 @@ userRouter.post("/signin",async(req,res)=>{
     if(result.error){
         return res.json({msg:"wrong creddential"})
     }
+    console.log("Received body:", req.body);
     const {email,Password} = result.data
     if( !email || !Password){
         return res.json({msg:"incomplete credential"})

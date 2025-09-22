@@ -14,7 +14,7 @@ export default function Signin(){
     return <AuthPage isSignin={true} onSumbit={async({email,password})=>{
          const payload = {  email, Password: password }
         const res = await axios.post(`${HTTP_BACKEND}/signin`,
-            {payload},
+            payload,
 
          {headers:{"Content-Type": "application/json"
     }}

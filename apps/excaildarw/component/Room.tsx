@@ -37,8 +37,6 @@ async function CreateRoom(){
   router.push(`/canvas/${data.data.roomId}`)
   
      
-
-  
 }
     return <div className="text-center">
       <div className="mb-2">

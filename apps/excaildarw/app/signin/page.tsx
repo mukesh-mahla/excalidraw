@@ -16,8 +16,8 @@ export default function Signin(){
         const res = await axios.post(`${HTTP_BACKEND}/signin`,
             {payload},
 
-         {headers:{"Content-Type": "application/json",
-    "Content-Length": JSON.stringify(payload).length}}
+         {headers:{"Content-Type": "application/json"
+    }}
 )
         const token = res.data.token
         localStorage.setItem("token",token)

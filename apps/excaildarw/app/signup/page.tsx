@@ -18,8 +18,8 @@ export default function Signup(){
             payload
         },{
   headers: {
-    "Content-Type": "application/json",
-    "Content-Length": JSON.stringify(payload).length
+    "Content-Type": "application/json"
+    
   }
 })
         console.log(password)

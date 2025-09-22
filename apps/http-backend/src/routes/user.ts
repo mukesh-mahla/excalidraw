@@ -30,6 +30,7 @@ userRouter.post("/signup",async(req,res)=>{
 
     return res.json({msg:"signed up succesfully",userId:user.id})
 }catch(e){
+    console.log(e)
     res.status(400).json({message:"something is wrong"})
 }
 

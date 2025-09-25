@@ -11,8 +11,8 @@ export function Canvas({roomId}:{roomId:string}){
 const [socket,setSocket] = useState<WebSocket | null>(null)
 
 useEffect(()=>{
-
-    const ws = new WebSocket(`${WS_BACKEND}?token=${localStorage.getItem("token")}`);
+const token = localStorage.getItem("token")
+    const ws = new WebSocket(`${WS_BACKEND}?token=${token}`);
 
     ws.onopen = ()=>{
         setSocket(ws)
@@ -20,7 +20,10 @@ useEffect(()=>{
             roomId
         }))
     }
-},[])
+     return () => {
+      ws.close()
+    }
+},[roomId])
 
 if(!socket){
     return <div>

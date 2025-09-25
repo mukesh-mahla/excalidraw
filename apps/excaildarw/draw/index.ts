@@ -63,6 +63,7 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomId: string
 
     canvas.addEventListener("mousedown", (e) => {
         const rect = canvas.getBoundingClientRect();
+          
         startX = e.clientX - rect.left;
         startY = e.clientY - rect.top;
 
@@ -254,6 +255,203 @@ if (!textInput.classList.contains("hidden")) {
             }
         }
     })
+
+    canvas.addEventListener("touchstart",(e)=>{
+           
+           const rect = canvas.getBoundingClientRect();
+
+        const touch = e.touches[0]; 
+        startX = touch.clientX - rect.left;
+        startY = touch.clientY - rect.top;
+
+        //@ts-ignore
+        const selectedTool = window.selectedTool;
+        //@ts-ignore
+        const textInput = window.textInputRef as HTMLTextAreaElement | null;
+
+        click = true;
+
+        if (selectedTool === "pencil") {
+          currentPoints = [{ x: startX, y: startY }];
+        }
+
+        if (selectedTool === "text" && textInput) {
+    
+          canvas.addEventListener("dblclick", (e: MouseEvent) => {
+            const StartX = e.clientX - rect.left;
+            const StartY = e.clientY - rect.top;
+
+            if (!textInput.classList.contains("hidden")) {
+              return;
+            }
+
+            e.preventDefault();
+            click = false; 
+
+            textInput.style.left = `${StartX}px`;
+            textInput.style.top = `${StartY}px`;
+            textInput.style.font = "20px Arial";
+            textInput.style.lineHeight = "20px";
+            textInput.value = "";
+            textInput.classList.remove("hidden");
+            textInput.focus();
+
+            textInput.onblur = () => finalizeText(textInput, StartX, StartY);
+
+            function finalizeText(
+              textInput: HTMLTextAreaElement,
+              StartX: number,
+              StartY: number
+            ) {
+              const val = textInput.value.trim();
+              if (val) {
+                const ctx = canvas.getContext("2d")!;
+                ctx.font = "20px Arial";
+                const metrics = ctx.measureText(val);
+                const ascent = metrics.actualBoundingBoxAscent || 20;
+      
+                const shape: shape = {
+                  type: "text",
+                  x: StartX,
+                  y: StartY + ascent,
+                  value: val,
+                };
+
+                saveState(exsistinShape);
+                exsistinShape.push(shape);
+                clearCtx(ctx, canvas, exsistinShape);
+      
+                socket.send(
+                  JSON.stringify({
+                    type: "chat",
+                    message: { shape },
+                    roomId,
+                  })
+                );
+              }
+      
+           textInput.value = "";
+            textInput.classList.add("hidden");
+            }
+          });
+        }
+      });
+         
+       
+          canvas.addEventListener("touchmove", (e: TouchEvent) => {
+  if (click) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0]; // 👈 first finger
+    const currentX = touch.clientX - rect.left;
+    const currentY = touch.clientY - rect.top;
+
+    const width = currentX - startX;
+    const height = currentY - startY;
+
+    clearCtx(ctx, canvas, exsistinShape);
+    ctx.strokeStyle = "rgba(255,255,255)";
+
+    //@ts-ignore
+    const selectedTool = window.selectedTool;
+
+    if (selectedTool === "rect") {
+      ctx.strokeRect(startX, startY, width, height);
+    } else if (selectedTool === "circle") {
+      const centerX = startX + width / 2;
+      const centerY = startY + height / 2;
+      const radius = Math.max(Math.abs(width), Math.abs(height)) / 2;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.closePath();
+    } else if (selectedTool === "line") {
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(currentX, currentY);
+      ctx.stroke();
+      ctx.closePath();
+    } else if (selectedTool === "pencil") {
+      currentPoints.push({ x: currentX, y: currentY });
+      ctx.beginPath();
+      ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
+      for (let i = 1; i < currentPoints.length; i++) {
+        ctx.lineTo(currentPoints[i].x, currentPoints[i].y);
+      }
+      ctx.stroke();
+      ctx.closePath();
+    }
+  }
+});
+     
+          
+        canvas.addEventListener("touchend", (e: TouchEvent) => {
+  if (!click) return;
+
+  click = false;
+  const rect = canvas.getBoundingClientRect();
+
+  const touch = e.changedTouches[0]; // 👈 finger lifted
+  const width = touch.clientX - rect.left - startX;
+  const height = touch.clientY - rect.top - startY;
+
+  //@ts-ignore
+  let selectedTool = window.selectedTool;
+  let shape: shape | null = null;
+
+  if (selectedTool === "rect") {
+    shape = {
+      type: "rect",
+      x: startX,
+      y: startY,
+      height,
+      width,
+    };
+  } else if (selectedTool === "circle") {
+    const radius = Math.max(Math.abs(width), Math.abs(height)) / 2;
+    const centerX = startX + width / 2;
+    const centerY = startY + height / 2;
+    shape = {
+      type: "circle",
+      radius: radius,
+      centerX: centerX,
+      centerY: centerY,
+      startAngle: 0,
+      endAngle: Math.PI * 2,
+    };
+  } else if (selectedTool === "line") {
+    shape = {
+      type: "line",
+      startx: startX,
+      starty: startY,
+      endx: touch.clientX - rect.left,
+      endy: touch.clientY - rect.top,
+    };
+  } else if (selectedTool === "pencil") {
+    shape = {
+      type: "pencil",
+      points: currentPoints,
+    };
+    currentPoints = [];
+  }
+
+  if (!shape) {
+    return;
+  }
+
+  saveState(exsistinShape);
+  exsistinShape.push(shape);
+
+  clearCtx(ctx, canvas, exsistinShape);
+
+  socket.send(
+    JSON.stringify({
+      type: "chat",
+      message: { shape },
+      roomId,
+    })
+  );
+});
+
 
     function undo() {
         if (undoShape.length === 0) return

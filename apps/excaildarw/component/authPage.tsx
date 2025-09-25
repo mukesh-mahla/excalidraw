@@ -11,14 +11,14 @@ export default function AuthPage({isSignin,onSumbit}:{isSignin:boolean,onSumbit:
     const passwordRef = useRef<HTMLInputElement>(null)
 
     const handelClick = ()=>{
-         console.log("handleClick called")
+         
        let values ={
             userName:userNameRef.current?.value || "",
             email:emailRef.current?.value || "",
             password:passwordRef.current?.value || ""     
 
         }
-        console.log("values from AuthPage:", values)
+        
         onSumbit(values)
        
         

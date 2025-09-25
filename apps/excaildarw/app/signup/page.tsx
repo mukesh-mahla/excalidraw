@@ -7,7 +7,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 
 const HTTP_BACKEND = process.env.NEXT_PUBLIC_HTTP_BACKEND
-console.log("HTTP_BACKEND", HTTP_BACKEND)
+
 
 export default function Signup(){
     

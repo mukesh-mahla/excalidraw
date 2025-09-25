@@ -46,14 +46,14 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomId: string
         return
     }
 
-    socket.onmessage = (event) => {
+    socket.addEventListener("message", (event) => {
         const message = JSON.parse(event.data)
         if (message.type == "chat") {
             const parsedShape = message.message.shape
             exsistinShape.push(parsedShape)
             clearCtx(ctx, canvas, exsistinShape)
         }
-    }
+    })
     
     clearCtx(ctx, canvas, exsistinShape)
     let click = false
@@ -69,8 +69,7 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomId: string
 
         //@ts-ignore
         const selectedTool = window.selectedTool;
-        //@ts-ignore
-        const textInput = window.textInputRef as HTMLTextAreaElement | null;
+        
 
         click = true;
         
@@ -78,11 +77,18 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomId: string
         if (selectedTool === "pencil") {
             currentPoints = [{x: startX, y: startY}]
         }
-         
-     if (selectedTool === "text" && textInput) {
+               })
+
+               //@ts-ignore
+        const textInput = window.textInputRef as HTMLTextAreaElement | null;
+
+              
 
         canvas.addEventListener("dblclick",(e)=>{
-
+            //@ts-ignore
+            const selectedTool = window.selectedTool;
+if (selectedTool === "text" && textInput){
+            const rect = canvas.getBoundingClientRect();
            const  StartX = e.clientX-rect.left
           const  StartY = e.clientY-rect.top
 
@@ -140,11 +146,9 @@ if (!textInput.classList.contains("hidden")) {
            }
            
                }
-
+            }
         )
-    }
-                   
-               })
+      
 
     canvas.addEventListener("mouseup", (e) => {
         if (!click) return; 
@@ -204,14 +208,19 @@ if (!textInput.classList.contains("hidden")) {
         exsistinShape.push(shape);
 
         clearCtx(ctx, canvas, exsistinShape)
-
-        socket.send(JSON.stringify({
+        
+if(socket.readyState === WebSocket.OPEN){
+    socket.send(JSON.stringify({
             type: "chat",
             message: {
                 shape
             },
             roomId
         }))
+        }else{
+            alert("WebSocket is not connected.")
+        }
+        
     })
 
     canvas.addEventListener("mousemove", (e) => {

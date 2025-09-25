@@ -20,9 +20,7 @@ const token = localStorage.getItem("token")
             roomId
         }))
     }
-     return () => {
-      ws.close()
-    }
+     
 },[roomId])
 
 if(!socket){

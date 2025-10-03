@@ -13,7 +13,7 @@ const [socket,setSocket] = useState<WebSocket | null>(null)
 useEffect(()=>{
 const token = localStorage.getItem("token")
 
-    const ws = new WebSocket(`${WS_BACKEND}?token=${token}`);
+    const ws = new WebSocket(`${WS_BACKEND}/?token=${token}`);
 
     ws.onopen = ()=>{
         

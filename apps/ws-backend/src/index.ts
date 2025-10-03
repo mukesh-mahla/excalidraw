@@ -4,7 +4,7 @@ import  Jwt, { JwtPayload }  from "jsonwebtoken";
 import { JWT_SECERET } from "@repo/backend-common/config";
 
 dotenv.config()
-const PORT =  8080
+const PORT = Number(process.env.PORT) || 8080
 const wss = new WebSocketServer({ port: PORT });
 import { prisma } from "@repo/db/client";
 

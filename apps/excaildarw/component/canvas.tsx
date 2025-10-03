@@ -12,13 +12,16 @@ const [socket,setSocket] = useState<WebSocket | null>(null)
 
 useEffect(()=>{
 const token = localStorage.getItem("token")
+
     const ws = new WebSocket(`${WS_BACKEND}?token=${token}`);
 
     ws.onopen = ()=>{
-        setSocket(ws)
+        
+        
         ws.send(JSON.stringify({type:"join_room",
             roomId
         }))
+        setSocket(ws)
     }
      
 },[roomId])

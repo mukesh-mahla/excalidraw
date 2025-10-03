@@ -45,8 +45,9 @@ export default async function initDraw(canvas: HTMLCanvasElement, roomId: string
     if (!ctx) {
         return
     }
-
+          
     socket.addEventListener("message", (event) => {
+        
         const message = JSON.parse(event.data)
         if (message.type == "chat") {
             const parsedShape = message.message.shape

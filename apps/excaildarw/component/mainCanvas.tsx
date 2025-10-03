@@ -41,7 +41,7 @@ export function MainCanvas({ roomId, socket }: { roomId: string, socket: WebSock
                 undoRedoRef.current = res
             })
         }
-    }, [canvasRef])
+    }, [canvasRef,socket])
 
     return (
         <div className="h-screen w-screen overflow-hidden">

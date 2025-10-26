@@ -36,6 +36,7 @@ function authUser(token: string): string | null {
 }
 
 wss.on("connection", (ws, request) => {
+  console.log("New client connected");
   const url = request.url;
   if (!url) return;
 
@@ -47,6 +48,7 @@ wss.on("connection", (ws, request) => {
     ws.close();
     return;
   }
+  console.log("User authenticated:")
 
   users.push({ userId, rooms: [], ws });
 

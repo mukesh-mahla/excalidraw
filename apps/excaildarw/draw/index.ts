@@ -266,14 +266,6 @@ if(socket.readyState === WebSocket.OPEN){
         }
     })
 
-    
-         
-       
-         
-     
-          
-       
-
     function undo() {
         if (undoShape.length === 0) return
         redoShape.push([...exsistinShape.map((s) => ({ ...s }))])

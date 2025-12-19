@@ -1,130 +1,133 @@
 import { Button } from "@repo/ui/button";
 import { Card } from "@repo/ui/card";
-import { Download, Github, Pencil, Share2, Sparkles, Users2 } from "lucide-react";
+import {
+  Download,
+  Github,
+  Pencil,
+  Share2,
+  Sparkles,
+  Users2,
+} from "lucide-react";
 import Link from "next/link";
 
-function App() {
+export default function App() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Hero Section */}
+      {/* HERO */}
       <header className="relative overflow-hidden">
-        <div className="container mx-auto px-4 py-16 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
-              Collaborative Whiteboarding
-              <span className="text-primary block">Made Simple</span>
+        <div className="container mx-auto px-4 py-20">
+          <div className="text-center max-w-3xl mx-auto">
+            <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight">
+              Think better.
+              <span className="block bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+                Draw together.
+              </span>
             </h1>
-            <p className="mx-auto mt-4 max-w-md sm:max-w-2xl text-base sm:text-lg text-muted-foreground">
-              Create, collaborate, and share beautiful diagrams and sketches with our intuitive drawing tool. 
-              No sign-up required.
+
+            <p className="mt-6 text-lg text-muted-foreground">
+              A fast, multiplayer whiteboard for brainstorming, system design,
+              and visual thinking — no friction, no sign-up.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/signin" className="w-full sm:w-auto">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto h-12 px-6">
+
+            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/room">
+                <Button size="lg" className="h-12 px-8 flex gap-2">
+                  <Pencil className="h-4 w-4" />
+                  Start Drawing
+                </Button>
+              </Link>
+
+              <Link href="/signin">
+                <Button variant="outline" size="lg" className="h-12 px-8">
                   Sign in
                 </Button>
               </Link>
-              <Link href="/signup" className="w-full sm:w-auto">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto h-12 px-6">
-                  Sign up
-                </Button>
-              </Link>
             </div>
+
+            <p className="mt-6 text-sm text-muted-foreground">
+              Used by developers, designers & students
+            </p>
           </div>
         </div>
       </header>
 
-      {/* Features Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/50">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            <Card className="p-6 border-2 hover:border-primary transition-colors">
-              <div className="flex items-center gap-4">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Share2 className="h-6 w-6 text-primary" />
+      {/* FEATURES */}
+      <section className="py-20 bg-muted/40">
+        <div className="container mx-auto px-4">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                icon: Share2,
+                title: "Instant Sharing",
+                desc: "Share a single link and collaborate instantly with anyone.",
+              },
+              {
+                icon: Users2,
+                title: "Live Multiplayer",
+                desc: "See cursors, edits, and ideas appear in real-time.",
+              },
+              {
+                icon: Sparkles,
+                title: "Smart Sketching",
+                desc: "Clean shapes and diagrams without fighting the tool.",
+              },
+            ].map(({ icon: Icon, title, desc }) => (
+              <Card
+                key={title}
+                className="p-6 transition-all hover:-translate-y-1 hover:shadow-lg"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-primary/10">
+                    <Icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold">{title}</h3>
                 </div>
-                <h3 className="text-xl font-semibold">Real-time Collaboration</h3>
-              </div>
-              <p className="mt-4 text-muted-foreground">
-                Work together with your team in real-time. Share your drawings instantly with a simple link.
-              </p>
-            </Card>
-
-            <Card className="p-6 border-2 hover:border-primary transition-colors">
-              <div className="flex items-center gap-4">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Users2 className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold">Multiplayer Editing</h3>
-              </div>
-              <p className="mt-4 text-muted-foreground">
-                Multiple users can edit the same canvas simultaneously. See who's drawing what in real-time.
-              </p>
-            </Card>
-
-            <Card className="p-6 border-2 hover:border-primary transition-colors">
-              <div className="flex items-center gap-4">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Sparkles className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold">Smart Drawing</h3>
-              </div>
-              <p className="mt-4 text-muted-foreground">
-                Intelligent shape recognition and drawing assistance helps you create perfect diagrams.
-              </p>
-            </Card>
+                <p className="mt-4 text-muted-foreground">{desc}</p>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="container mx-auto">
-          <div className="bg-primary rounded-3xl p-6 sm:p-12 lg:p-16 text-center">
-            <div className="mx-auto max-w-2xl">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-primary-foreground">
-                Ready to start creating?
-              </h2>
-              <p className="mx-auto mt-4 max-w-md sm:max-w-xl text-base sm:text-lg text-primary-foreground/80">
-                Join thousands of users who are already creating amazing diagrams and sketches.
-              </p>
-              <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <Link href="/room" className="w-full sm:w-auto">
-                  <Button
-                    size="lg"
-                    variant="secondary"
-                    className="w-full sm:w-auto h-12 px-6 flex items-center gap-2 justify-center"
-                  >
-                    <Pencil className="h-4 w-4" />
-                    Open Canvas
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t mt-auto">
-        <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:justify-between">
-            <p className="text-sm text-muted-foreground text-center sm:text-left">
-              © 2024 Excalidraw Clone. All rights reserved.
+      {/* CTA */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="rounded-3xl bg-gradient-to-r from-primary to-purple-600 p-12 text-center text-white">
+            <h2 className="text-3xl sm:text-4xl font-bold">
+              Your ideas deserve space
+            </h2>
+            <p className="mt-4 text-lg text-white/80">
+              Open a canvas and start thinking visually in seconds.
             </p>
-            <div className="flex space-x-6">
-              <a href="https://github.com" className="text-muted-foreground hover:text-primary">
-                <Github className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-primary">
-                <Download className="h-5 w-5" />
-              </a>
+
+            <div className="mt-8">
+              <Link href="/room">
+                <Button size="lg" variant="secondary" className="h-12 px-8">
+                  Open Canvas
+                </Button>
+              </Link>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="border-t mt-auto">
+        <div className="container mx-auto px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">
+            © 2024 Excalidraw Clone
+          </p>
+
+          <div className="flex gap-6">
+            <a href="https://github.com" className="hover:text-primary">
+              <Github className="h-5 w-5" />
+            </a>
+            <a href="#" className="hover:text-primary">
+              <Download className="h-5 w-5" />
+            </a>
           </div>
         </div>
       </footer>
     </div>
   );
 }
-
-export default App;

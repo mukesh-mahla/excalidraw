@@ -16,8 +16,7 @@ const token = localStorage.getItem("token")
     const ws = new WebSocket(`${WS_BACKEND}/?token=${token}`);
 
     ws.onopen = ()=>{
-        
-        
+    
         ws.send(JSON.stringify({type:"join_room",
             roomId
         }))

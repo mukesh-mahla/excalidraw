@@ -3,14 +3,15 @@
 import { ReactNode } from "react";
 
 interface ButtonProps {
-  variant: "primary" | "outline" | "secondary";
+  variant?: "primary" | "outline" | "secondary";
   className?: string;
   onClick?: () => void;
-  size: "lg" | "sm";
+  size?: "lg" | "sm";
+  disabled?: boolean;
   children?: ReactNode;
 }
 
-export const Button = ({ size, variant, className, onClick, children  }: ButtonProps) => {
+export const Button = ({ size, variant, className, onClick, disabled, children  }: ButtonProps) => {
   return (
     <button
       className={`${className}

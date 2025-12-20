@@ -281,7 +281,7 @@ if(socket.readyState === WebSocket.OPEN){
         undoShape.push([...exsistinShape.map((s) => ({ ...s }))])
         const next = redoShape.pop()
         if (next) {
-            exsistinShape = [...next]
+            exsistinShape = [...next] 
             clearCtx(ctx!, canvas, exsistinShape)
         }
     }

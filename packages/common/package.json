@@ -6,7 +6,7 @@
   "type":"module",
     "types": "dist/types.d.ts",
   "exports":{".": {
-      "import": "./dist/index.js",
+      "import": "./dist/types.js",
       "types": "./dist/types.d.ts"
     }},
   "scripts": {

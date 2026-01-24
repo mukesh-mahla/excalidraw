@@ -4,7 +4,7 @@ const userRouter:Router = express.Router()
 import jwt from "jsonwebtoken"
 import  {JWT_SECERET}  from "@repo/backend-common";
 import { userAuth } from "../middleware.js";
-import {CreateUserSchema,CreateSigninSchema,CreateRoomSchema} from "@repo/common/types"
+import {CreateUserSchema,CreateSigninSchema,CreateRoomSchema} from "@repo/common"
 import {prisma} from "@repo/db"
 
 userRouter.post("/signup",async(req,res)=>{

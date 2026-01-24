@@ -2,6 +2,7 @@
   "name": "ws-backend",
   "version": "1.0.0",
   "description": "",
+  "type":"module",
   "main": "index.js",
   "scripts": {
     "build": "pnpm --filter @repo/db run prisma:generate && tsc -b",

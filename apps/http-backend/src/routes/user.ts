@@ -3,7 +3,7 @@ import bcrypt from "bcrypt"
 const userRouter:Router = express.Router()
 import jwt from "jsonwebtoken"
 import  {JWT_SECERET}  from "@repo/backend-common/config";
-import { userAuth } from "../middleware";
+import { userAuth } from "../middleware.js";
 import {CreateUserSchema,CreateSigninSchema,CreateRoomSchema} from "@repo/common/types"
 import {prisma} from "@repo/db"
 

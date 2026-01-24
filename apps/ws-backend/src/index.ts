@@ -3,7 +3,7 @@ import express from "express";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import Jwt, { JwtPayload } from "jsonwebtoken";
-import { JWT_SECERET } from "@repo/backend-common/config";
+import { JWT_SECERET } from "@repo/backend-common";
 import { prisma } from "@repo/db";
 
 dotenv.config();

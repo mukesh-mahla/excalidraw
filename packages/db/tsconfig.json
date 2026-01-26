@@ -6,7 +6,8 @@
     "outDir": "./dist",
     "types": ["node"],
     "module": "nodenext",
-    "target": "esnext"
+    "target": "esnext",
+    "incremental": false
   },
 
   "include": ["src/**/*.ts"],

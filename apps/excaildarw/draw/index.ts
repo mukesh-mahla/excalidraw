@@ -233,7 +233,7 @@ if(socket.readyState === WebSocket.OPEN){
             const width = currentX - startX
             const height = currentY - startY
             clearCtx(ctx, canvas, exsistinShape)
-            ctx.strokeStyle = "rgba(255,255,255)"
+            ctx.strokeStyle = "rgba(31, 41, 55, 1)"
             //@ts-ignore
             const selectedTool = window.selectedTool
             
@@ -303,23 +303,23 @@ function clearCtx(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, exsi
         if (!shape) return; 
         
         if (shape.type === "rect") {
-            ctx.strokeStyle = "rgba(255, 255, 255)"
+            ctx.strokeStyle = "rgba(31, 41, 55, 1)"
             ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
         } else if (shape.type === "circle") {
-            ctx.strokeStyle = "rgba(255, 255, 255)"
+            ctx.strokeStyle = "rgba(31, 41, 55, 1)"
             ctx.beginPath();
             ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
             ctx.stroke();
             ctx.closePath();
         } else if (shape.type === "line") {
-            ctx.strokeStyle = "rgba(255, 255, 255)"
+            ctx.strokeStyle = "rgba(31, 41, 55, 1)"
             ctx.beginPath()
             ctx.moveTo(shape.startx, shape.starty)
             ctx.lineTo(shape.endx, shape.endy)
             ctx.stroke()
             ctx.closePath()
         } else if (shape.type === "pencil") {
-            ctx.strokeStyle = "rgba(255, 255, 255)"
+            ctx.strokeStyle = "rgba(31, 41, 55, 1)"
             ctx.beginPath();
             ctx.moveTo(shape.points[0].x, shape.points[0].y);
             for (let i = 1; i < shape.points.length; i++) {

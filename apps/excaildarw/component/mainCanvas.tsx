@@ -46,7 +46,7 @@ export function MainCanvas({ roomId, socket }: { roomId: string, socket: WebSock
     return (
         <div className="h-screen w-screen overflow-hidden">
             
-            <canvas className="bg-amber-100" ref={canvasRef}></canvas>
+            <canvas  ref={canvasRef}></canvas>
 
             <textarea
                 ref={textInputRef}

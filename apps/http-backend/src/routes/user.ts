@@ -71,6 +71,7 @@ userRouter.post("/room",userAuth,async(req,res)=>{
     } 
              //@ts-ignore
          const userId = req.userId
+         console.log("got user id")
          try{
         const room = await prisma.room.create({
             data:{
@@ -81,7 +82,7 @@ userRouter.post("/room",userAuth,async(req,res)=>{
 
            res.json({roomId:room.id})
         }catch(e){
-            res.json({mag:"room already exist"})
+            res.json({msg:"room already exist"})
         }
         })
 

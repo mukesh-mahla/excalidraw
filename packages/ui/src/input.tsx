@@ -2,7 +2,7 @@
 
 import { ReactHTMLElement } from "react";
 
-function Input({  type , placeholder,value,  onChange,Inputref  }:{Inputref?:React.RefObject<HTMLInputElement | null>,value?:string,type?:string,placeholder:string,onChange?:(e:any)=>void}) {
+function Input({  type , placeholder,value,  onChange,Inputref,className  }:{Inputref?:React.RefObject<HTMLInputElement | null>,value?:string,className?:string,type?:string,placeholder:string,onChange?:(e:any)=>void}) {
   return (
     <div className="flex flex-col gap-2 mb-4">
       

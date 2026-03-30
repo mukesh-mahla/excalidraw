@@ -104,6 +104,8 @@ if (!textInput.classList.contains("hidden")) {
        textInput.style.top = `${StartY}px`
         textInput.style.font = "20px Arial";
         textInput.style.lineHeight = "20px";
+        textInput.style.color = "black";      
+textInput.style.caretColor = "black";
         textInput.value = "";
         textInput.classList.remove("hidden");
         textInput.focus();

@@ -329,7 +329,7 @@ function clearCtx(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, exsi
             ctx.closePath();
         } else if (shape.type === "text") {
             ctx.font = "20px Arial";
-            ctx.fillStyle = "#ffffff"
+            ctx.fillStyle = "black"
             ctx.textBaseline = "alphabetic";
             ctx.fillText(shape.value, shape.x, shape.y);
         }

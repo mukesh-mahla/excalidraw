@@ -1,351 +1,314 @@
-
-
 import axios from "axios"
-
 
 const HTTP_BACKEND = process.env.NEXT_PUBLIC_HTTP_BACKEND
 
-type shape = {
-    type: "rect",
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-} | {
-    type: "circle",
-    centerX: number,
-    centerY: number,
-    radius: number,
-    startAngle: number,
-    endAngle: number,
-} | {
-    type: "line",
-    startx: number,
-    starty: number,
-    endx: number,
-    endy: number,
-} | {
-    type: "pencil",
-    points: { x: number; y: number }[],
-} | {
-    type: "text",
-    x: number,
-    y: number,
-    value: string
+type Shape =
+  | { type: "rect"; x: number; y: number; width: number; height: number }
+  | { type: "circle"; centerX: number; centerY: number; radius: number; startAngle: number; endAngle: number }
+  | { type: "line"; startx: number; starty: number; endx: number; endy: number }
+  | { type: "pencil"; points: { x: number; y: number }[] }
+  | { type: "text"; x: number; y: number; value: string }
+
+export class DrawingCanvas {
+  private canvas: HTMLCanvasElement
+  private ctx: CanvasRenderingContext2D
+  private socket: WebSocket
+  private roomId: string
+
+  private existingShapes: Shape[] = []
+  private undoStack: Shape[][] = []
+  private redoStack: Shape[][] = []
+private currentTool: string = "circle"
+
+setTool(tool: string) {
+    this.currentTool = tool
 }
+  private isDrawing = false
+  private startX = 0
+  private startY = 0
+  private currentPoints: { x: number; y: number }[] = []
 
-export default async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
-    let exsistinShape: shape[] = await getExistingShape(roomId)
-    
-    let undoShape: shape[][] = []
-    let redoShape: shape[][] = []
+  private textInput: HTMLTextAreaElement | null = null
 
+  private constructor(
+    canvas: HTMLCanvasElement,
+    ctx: CanvasRenderingContext2D,
+    roomId: string,
+    socket: WebSocket
+  ) {
+    this.canvas = canvas
+    this.ctx = ctx
+    this.roomId = roomId
+    this.socket = socket
+  }
+
+  // Factory method — async so we can fetch existing shapes before binding events
+  static async init(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket,  textInput: HTMLTextAreaElement | null) {
     const ctx = canvas.getContext("2d")
+    if (!ctx) throw new Error("Could not get canvas 2D context")
 
-    if (!ctx) {
-        return
+    const instance = new DrawingCanvas(canvas, ctx, roomId, socket)
+    instance.existingShapes = await getExistingShapes(roomId)
+    instance.textInput = textInput 
+
+    instance.render()
+
+    instance.bindSocketListener()
+    instance.bindMouseEvents()
+
+    return instance
+  }
+
+  
+
+  // ─── Public API ───────────────────────────────────────────────────────────
+
+  undo() {
+    if (this.undoStack.length === 0) return
+    this.redoStack.push(this.cloneShapes(this.existingShapes))
+    const prev = this.undoStack.pop()!
+    this.existingShapes = prev
+    this.render()
+  }
+
+  redo() {
+    if (this.redoStack.length === 0) return
+    this.undoStack.push(this.cloneShapes(this.existingShapes))
+    const next = this.redoStack.pop()!
+    this.existingShapes = next
+    this.render()
+  }
+
+  // ─── Private helpers ──────────────────────────────────────────────────────
+
+private get selectedTool(): string {
+    return this.currentTool
+}
+  private saveState() {
+    this.undoStack.push(this.cloneShapes(this.existingShapes))
+    this.redoStack = []
+  }
+
+  private cloneShapes(shapes: Shape[]): Shape[] {
+    return shapes.map((s) => ({ ...s }))
+  }
+
+  private addShape(shape: Shape) {
+    this.saveState()
+    this.existingShapes.push(shape)
+    this.render()
+    this.sendShape(shape)
+  }
+
+  private sendShape(shape: Shape) {
+    if (this.socket.readyState !== WebSocket.OPEN) {
+      alert("WebSocket is not connected.")
+      return
     }
-          
-    socket.addEventListener("message", (event) => {
-        
-        const message = JSON.parse(event.data)
-        if (message.type == "chat") {
-            const parsedShape = message.message.shape
-            exsistinShape.push(parsedShape)
-            clearCtx(ctx, canvas, exsistinShape)
-        }
+    this.socket.send(JSON.stringify({ type: "chat", message: { shape }, roomId: this.roomId }))
+  }
+
+  public render() {
+    clearCtx(this.ctx, this.canvas, this.existingShapes)
+  }
+
+  // ─── Event binding ────────────────────────────────────────────────────────
+
+  private bindSocketListener() {
+    this.socket.addEventListener("message", (event) => {
+      const message = JSON.parse(event.data)
+      if (message.type === "chat") {
+        this.existingShapes.push(message.message.shape)
+        this.render()
+      }
     })
-    
-    clearCtx(ctx, canvas, exsistinShape)
-    let click = false
-    let startX = 0
-    let startY = 0
-    let currentPoints: {x: number, y: number}[] = [];
+  }
 
-    canvas.addEventListener("mousedown", (e) => {
-        const rect = canvas.getBoundingClientRect();
-          
-        startX = e.clientX - rect.left;
-        startY = e.clientY - rect.top;
+  private bindMouseEvents() {
+    this.canvas.addEventListener("mousedown", this.handleMouseDown)
+    this.canvas.addEventListener("mousemove", this.handleMouseMove)
+    this.canvas.addEventListener("mouseup", this.handleMouseUp)
+    this.canvas.addEventListener("dblclick", this.handleDoubleClick)
+  }
 
-        //@ts-ignore
-        const selectedTool = window.selectedTool;
-        
+  private handleMouseDown = (e: MouseEvent) => {
+    const { x, y } = this.getCanvasCoords(e)
+    this.startX = x
+    this.startY = y
+    this.isDrawing = true
 
-        click = true;
-        
+    if (this.selectedTool === "pencil") {
+      this.currentPoints = [{ x, y }]
+    }
+  }
 
-        if (selectedTool === "pencil") {
-            currentPoints = [{x: startX, y: startY}]
+  private handleMouseMove = (e: MouseEvent) => {
+    if (!this.isDrawing) return
+    const { x, y } = this.getCanvasCoords(e)
+    const width = x - this.startX
+    const height = y - this.startY
+
+    this.render()
+    this.ctx.strokeStyle = "rgba(75,85,99,1)"
+
+    switch (this.selectedTool) {
+      case "rect":
+        this.ctx.strokeRect(this.startX, this.startY, width, height)
+        break
+      case "circle": {
+        const radius = Math.max(Math.abs(width), Math.abs(height)) / 2
+        const cx = this.startX + width / 2
+        const cy = this.startY + height / 2
+        this.ctx.beginPath()
+        this.ctx.arc(cx, cy, radius, 0, Math.PI * 2)
+        this.ctx.stroke()
+        this.ctx.closePath()
+        break
+      }
+      case "line":
+        this.ctx.beginPath()
+        this.ctx.moveTo(this.startX, this.startY)
+        this.ctx.lineTo(x, y)
+        this.ctx.stroke()
+        this.ctx.closePath()
+        break
+      case "pencil":
+        this.currentPoints.push({ x, y })
+        this.ctx.beginPath()
+        this.ctx.moveTo(this.currentPoints[0].x, this.currentPoints[0].y)
+        for (let i = 1; i < this.currentPoints.length; i++) {
+          this.ctx.lineTo(this.currentPoints[i].x, this.currentPoints[i].y)
         }
-               })
+        this.ctx.stroke()
+        this.ctx.closePath()
+        break
+    }
+  }
 
-               //@ts-ignore
-        const textInput = window.textInputRef as HTMLTextAreaElement | null;
+  private handleMouseUp = (e: MouseEvent) => {
+    if (!this.isDrawing) return
+    this.isDrawing = false
 
-              
+    const { x, y } = this.getCanvasCoords(e)
+    const width = x - this.startX
+    const height = y - this.startY
+    let shape: Shape | null = null
 
-        canvas.addEventListener("dblclick",(e)=>{
-            //@ts-ignore
-            const selectedTool = window.selectedTool;
-if (selectedTool === "text" && textInput){
-            const rect = canvas.getBoundingClientRect();
-           const  StartX = e.clientX-rect.left
-          const  StartY = e.clientY-rect.top
-
-if (!textInput.classList.contains("hidden")) {
-            return; 
-          }
-
-        e.preventDefault();
-        click = false; // don’t drag-draw
-         
-        textInput.style.left = `${StartX}px`
-       textInput.style.top = `${StartY}px`
-        textInput.style.font = "20px Arial";
-        textInput.style.lineHeight = "20px";
-        textInput.style.color = "black";      
-textInput.style.caretColor = "black";
-        textInput.value = "";
-        textInput.classList.remove("hidden");
-        textInput.focus();
-
-        textInput.onblur = () => finalizeText(textInput, StartX, StartY)
-         
-        function finalizeText(
-             textInput: HTMLTextAreaElement,
-             StartX: number,
-             StartY: number
-           ) {
-             const val = textInput.value.trim();
-             if (val) {
-               const ctx = canvas.getContext("2d")!;
-               ctx.font = "20px Arial";
-               const metrics = ctx.measureText(val);
-               const ascent = metrics.actualBoundingBoxAscent || 20;
-           
-               const shape: shape = {
-                 type: "text",
-                 x: StartX,
-                 y: StartY + ascent,
-                 value: val,
-               };
-           
-               saveState(exsistinShape);
-               exsistinShape.push(shape);
-               clearCtx(ctx, canvas, exsistinShape);
-           
-               socket.send(
-                 JSON.stringify({
-                   type: "chat",
-                   message: { shape },
-                   roomId,
-                 })
-               );
-             }
-           
-             textInput.value = "";
-             textInput.classList.add("hidden");
-           }
-           
-               }
-            }
-        )
-      
-
-    canvas.addEventListener("mouseup", (e) => {
-        if (!click) return; 
-        
-        click = false
-        const rect = canvas.getBoundingClientRect();
-        const width = e.clientX - rect.left - startX;
-        const height = e.clientY - rect.top - startY;
-
-        // @ts-ignore
-        let selectedTool = window.selectedTool;
-        let shape: shape | null = null;
-        
-       
-
-        if (selectedTool === "rect") {
-            shape = {
-                type: "rect",
-                x: startX,
-                y: startY,
-                height,
-                width
-            }
-        } else if (selectedTool === "circle") {
-            const radius = Math.max(Math.abs(width), Math.abs(height)) / 2
-            const centerX = startX + width / 2
-            const centerY = startY + height / 2
-            shape = {
-                type: "circle",
-                radius: radius,
-                centerX: centerX,
-                centerY: centerY,
-                startAngle: 0,
-                endAngle: Math.PI * 2
-            }
-        } else if (selectedTool === "line") {
-            shape = {
-                type: "line",
-                startx: startX,
-                starty: startY,
-                endx: e.clientX - rect.left,
-                endy: e.clientY - rect.top
-            };
-        } else if (selectedTool === "pencil") {
-            shape = {
-                type: "pencil",
-                points: currentPoints
-            };
-            currentPoints = [];
+    switch (this.selectedTool) {
+      case "rect":
+        shape = { type: "rect", x: this.startX, y: this.startY, width, height }
+        break
+      case "circle":
+        shape = {
+          type: "circle",
+          radius: Math.max(Math.abs(width), Math.abs(height)) / 2,
+          centerX: this.startX + width / 2,
+          centerY: this.startY + height / 2,
+          startAngle: 0,
+          endAngle: Math.PI * 2,
         }
+        break
+      case "line":
+        shape = { type: "line", startx: this.startX, starty: this.startY, endx: x, endy: y }
+        break
+      case "pencil":
+        shape = { type: "pencil", points: this.currentPoints }
+        this.currentPoints = []
+        break
+    }
 
-        if (!shape) {
-            return;
-        }
-        
-        saveState(exsistinShape)
-        exsistinShape.push(shape);
+    if (shape) this.addShape(shape)
+  }
 
-        clearCtx(ctx, canvas, exsistinShape)
-        
-if(socket.readyState === WebSocket.OPEN){
-    socket.send(JSON.stringify({
-            type: "chat",
-            message: {
-                shape
-            },
-            roomId
-        }))
-        }else{
-            alert("WebSocket is not connected.")
-        }
-        
-    })
+  private handleDoubleClick = (e: MouseEvent) => {
+    if (this.selectedTool !== "text" || !this.textInput) return
+    if (!this.textInput.classList.contains("hidden")) return
 
-    canvas.addEventListener("mousemove", (e) => {
-        
-        if (click) {
-            const rect = canvas.getBoundingClientRect();
-            const currentX = e.clientX - rect.left;
-            const currentY = e.clientY - rect.top;
-            const width = currentX - startX
-            const height = currentY - startY
-            clearCtx(ctx, canvas, exsistinShape)
-            ctx.strokeStyle = "rgba(75,85,99,1)"
-            //@ts-ignore
-            const selectedTool = window.selectedTool
-            
-            if (selectedTool === "rect") {
-                ctx.strokeRect(startX, startY, width, height)
-            } else if (selectedTool === "circle") {
-                const centerX = startX + width / 2
-                const centerY = startY + height / 2
-                const radius = Math.max(Math.abs(width), Math.abs(height)) / 2
-                ctx.beginPath()
-                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
-                ctx.stroke()
-                ctx.closePath()
-            } else if (selectedTool === "line") {
-                ctx.beginPath()
-                ctx.moveTo(startX, startY)
-                ctx.lineTo(currentX, currentY)
-                ctx.stroke()
-                ctx.closePath()
-            } else if (selectedTool === "pencil") {
-                currentPoints.push({x: currentX, y: currentY});
-                ctx.beginPath();
-                ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
-                for (let i = 1; i < currentPoints.length; i++) {
-                    ctx.lineTo(currentPoints[i].x, currentPoints[i].y);
-                }
-                ctx.stroke();
-                ctx.closePath();
-            }
-        }
+    const { x, y } = this.getCanvasCoords(e)
+    e.preventDefault()
+    this.isDrawing = false
+
+    Object.assign(this.textInput.style, {
+      left: `${x}px`,
+      top: `${y}px`,
+      font: "20px Arial",
+      lineHeight: "20px",
+      color: "black",
+      caretColor: "black",
     })
 
-    function undo() {
-        if (undoShape.length === 0) return
-        redoShape.push([...exsistinShape.map((s) => ({ ...s }))])
-        const prev = undoShape.pop()
-        if (prev) {
-            exsistinShape = [...prev]
-            clearCtx(ctx!, canvas, exsistinShape)
-        }
-    }
+    this.textInput.value = ""
+    this.textInput.classList.remove("hidden")
+    this.textInput.focus()
+    this.textInput.onblur = () => this.finalizeText(x, y)
+  }
 
-    function redo() {
-        if (redoShape.length === 0) return
-        undoShape.push([...exsistinShape.map((s) => ({ ...s }))])
-        const next = redoShape.pop()
-        if (next) {
-            exsistinShape = [...next] 
-            clearCtx(ctx!, canvas, exsistinShape)
-        }
+  private finalizeText(startX: number, startY: number) {
+    const val = this.textInput?.value.trim()
+    if (val) {
+      this.ctx.font = "20px Arial"
+      const metrics = this.ctx.measureText(val)
+      const ascent = metrics.actualBoundingBoxAscent || 20
+      this.addShape({ type: "text", x: startX, y: startY + ascent, value: val })
     }
+    if (this.textInput) {
+      this.textInput.value = ""
+      this.textInput.classList.add("hidden")
+    }
+  }
 
-    function saveState(existingShapes: shape[]) {
-        undoShape.push([...existingShapes.map((s) => ({ ...s }))])
-        redoShape = []
-    }
-    
-    return { undo, redo }
+  private getCanvasCoords(e: MouseEvent) {
+    const rect = this.canvas.getBoundingClientRect()
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top }
+  }
 }
 
-function clearCtx(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, exsistinShape: shape[]) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "rgba(255,248,220,1)"
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+// ─── Module-level helpers ────────────────────────────────────────────────────
 
-    exsistinShape.map((shape) => {
-        if (!shape) return; 
-        
-        if (shape.type === "rect") {
-            ctx.strokeStyle = "rgba(75,85,99,1)"
-            ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
-        } else if (shape.type === "circle") {
-            ctx.strokeStyle = "rgba(75,85,99,1)"
-            ctx.beginPath();
-            ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.closePath();
-        } else if (shape.type === "line") {
-            ctx.strokeStyle = "rgba(75,85,99,1)"
-            ctx.beginPath()
-            ctx.moveTo(shape.startx, shape.starty)
-            ctx.lineTo(shape.endx, shape.endy)
-            ctx.stroke()
-            ctx.closePath()
-        } else if (shape.type === "pencil") {
-            ctx.strokeStyle = "rgba(75,85,99,1)"
-            ctx.beginPath();
-            ctx.moveTo(shape.points[0].x, shape.points[0].y);
-            for (let i = 1; i < shape.points.length; i++) {
-                ctx.lineTo(shape.points[i].x, shape.points[i].y);
-            }
-            ctx.stroke();
-            ctx.closePath();
-        } else if (shape.type === "text") {
-            ctx.font = "20px Arial";
-            ctx.fillStyle = "black"
-            ctx.textBaseline = "alphabetic";
-            ctx.fillText(shape.value, shape.x, shape.y);
-        }
-        
-    })
+function clearCtx(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, shapes: Shape[]) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.fillStyle = "rgba(255,248,220,1)"
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+  for (const shape of shapes) {
+    if (!shape) continue
+    ctx.strokeStyle = "rgba(75,85,99,1)"
+
+    switch (shape.type) {
+      case "rect":
+        ctx.strokeRect(shape.x, shape.y, shape.width, shape.height)
+        break
+      case "circle":
+        ctx.beginPath()
+        ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2)
+        ctx.stroke()
+        ctx.closePath()
+        break
+      case "line":
+        ctx.beginPath()
+        ctx.moveTo(shape.startx, shape.starty)
+        ctx.lineTo(shape.endx, shape.endy)
+        ctx.stroke()
+        ctx.closePath()
+        break
+      case "pencil":
+        ctx.beginPath()
+        ctx.moveTo(shape.points[0].x, shape.points[0].y)
+        for (let i = 1; i < shape.points.length; i++) ctx.lineTo(shape.points[i].x, shape.points[i].y)
+        ctx.stroke()
+        ctx.closePath()
+        break
+      case "text":
+        ctx.font = "20px Arial"
+        ctx.fillStyle = "black"
+        ctx.textBaseline = "alphabetic"
+        ctx.fillText(shape.value, shape.x, shape.y)
+        break
+    }
+  }
 }
 
-async function getExistingShape(roomId: string) {
-    const res = await axios.get(`${HTTP_BACKEND}/chats/${roomId}`)
-    const messages = res.data.message
-
-    const shapes = messages.map((x: {message: string}) => {
-        const messageData = JSON.parse(x.message)
-        return messageData.shape
-    })
-    return shapes
+async function getExistingShapes(roomId: string): Promise<Shape[]> {
+  const res = await axios.get(`${HTTP_BACKEND}/chats/${roomId}`)
+  return res.data.message.map((x: { message: string }) => JSON.parse(x.message).shape)
 }

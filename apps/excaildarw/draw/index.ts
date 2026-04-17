@@ -256,10 +256,11 @@ export class DrawingCanvas {
   private handleMouseUp = (e: MouseEvent) => {
     if(this.selectedTool === "drag"){
       this.canvas.style.cursor = "crosshair"
+      this.isPanning = false;
     }
     if (!this.isDrawing) return;
     this.isDrawing = false;
-    this.isPanning = false;
+    
 
     const { x, y } = this.getMouseWorldPos(e);
     const width = x - this.startX;

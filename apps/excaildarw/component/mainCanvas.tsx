@@ -45,7 +45,7 @@ export function MainCanvas({ roomId, socket }: { roomId: string; socket: WebSock
 
     return (
         <div className="h-screen w-screen overflow-hidden">
-            <canvas ref={canvasRef} />
+            <canvas ref={canvasRef} style={{ cursor: selectedTool === "drag" ? "grab" : "crosshair" }} />
             <textarea
                 ref={textInputRef}
                 className="absolute overflow-hidden border-none p-0 m-0 bg-transparent outline-none resize-none hidden text-white"

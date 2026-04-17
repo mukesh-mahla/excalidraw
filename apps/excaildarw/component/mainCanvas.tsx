@@ -2,7 +2,7 @@ import { DrawingCanvas } from "@/draw"
 import { Circle, Minus, Palette, Pencil, RectangleHorizontalIcon, Redo, Type, Undo } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { ButtonIcon } from "./buttonIcon"
-
+import { Hand } from "lucide-react"
 type ShapeTool = "line" | "rect" | "circle" | "pencil" | "color" | "text"
 
 export function MainCanvas({ roomId, socket }: { roomId: string; socket: WebSocket }) {
@@ -10,7 +10,7 @@ export function MainCanvas({ roomId, socket }: { roomId: string; socket: WebSock
     const textInputRef = useRef<HTMLTextAreaElement>(null)
     const [selectedTool, setSelectedTool] = useState<ShapeTool>("circle")
     const drawingRef = useRef<DrawingCanvas | null>(null)
-
+    const cameraRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
     // Keep the class in sync with React's selected tool state
     useEffect(() => {
         drawingRef.current?.setTool(selectedTool)
@@ -36,10 +36,11 @@ export function MainCanvas({ roomId, socket }: { roomId: string; socket: WebSock
         const canvas = canvasRef.current
         if (!canvas || !socket) return
 
-        DrawingCanvas.init(canvas, roomId, socket, textInputRef.current).then((instance) => {
+        DrawingCanvas.init(canvas, roomId, socket, textInputRef.current,cameraRef.current).then((instance) => {
             drawingRef.current = instance
             instance.setTool(selectedTool)
         })
+        return () => drawingRef.current?.destroy()
     }, [socket])
 
     return (

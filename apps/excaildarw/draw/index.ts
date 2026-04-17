@@ -9,12 +9,17 @@ type Shape =
   | { type: "pencil"; points: { x: number; y: number }[] }
   | { type: "text"; x: number; y: number; value: string }
 
+  interface camara  {
+    x:number,
+    y:number
+  }
+
 export class DrawingCanvas {
   private canvas: HTMLCanvasElement
   private ctx: CanvasRenderingContext2D
   private socket: WebSocket
   private roomId: string
-
+  private Camara:camara
   private existingShapes: Shape[] = []
   private undoStack: Shape[][] = []
   private redoStack: Shape[][] = []
@@ -34,20 +39,22 @@ setTool(tool: string) {
     canvas: HTMLCanvasElement,
     ctx: CanvasRenderingContext2D,
     roomId: string,
-    socket: WebSocket
+    socket: WebSocket,
+    Camara:camara
   ) {
     this.canvas = canvas
     this.ctx = ctx
     this.roomId = roomId
     this.socket = socket
+    this.Camara=Camara
   }
 
   // Factory method — async so we can fetch existing shapes before binding events
-  static async init(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket,  textInput: HTMLTextAreaElement | null) {
+  static async init(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket,  textInput: HTMLTextAreaElement | null,Camara:camara) {
     const ctx = canvas.getContext("2d")
     if (!ctx) throw new Error("Could not get canvas 2D context")
 
-    const instance = new DrawingCanvas(canvas, ctx, roomId, socket)
+    const instance = new DrawingCanvas(canvas, ctx, roomId, socket,Camara)
     instance.existingShapes = await getExistingShapes(roomId)
     instance.textInput = textInput 
 
@@ -59,6 +66,15 @@ setTool(tool: string) {
     return instance
   }
 
+  private handleWheel = (e: WheelEvent) => {
+    e.preventDefault(); // Stop page from scrolling
+    
+    // Update camera coordinates
+    this.Camara.x -= e.deltaX;
+    this.Camara.y -= e.deltaY;
+
+    this.render();
+};
   
 
   // ─── Public API ───────────────────────────────────────────────────────────
@@ -78,6 +94,14 @@ setTool(tool: string) {
     this.existingShapes = next
     this.render()
   }
+
+  destroy() {
+  this.canvas.removeEventListener("wheel", this.handleWheel)
+  this.canvas.removeEventListener("mousedown", this.handleMouseDown)
+  this.canvas.removeEventListener("mousemove", this.handleMouseMove)
+  this.canvas.removeEventListener("mouseup", this.handleMouseUp)
+  this.canvas.removeEventListener("dblclick", this.handleDoubleClick)
+}
 
   // ─── Private helpers ──────────────────────────────────────────────────────
 
@@ -109,7 +133,7 @@ private get selectedTool(): string {
   }
 
   public render() {
-    clearCtx(this.ctx, this.canvas, this.existingShapes)
+    clearCtx(this.ctx, this.canvas, this.existingShapes,this.Camara)
   }
 
   // ─── Event binding ────────────────────────────────────────────────────────
@@ -125,6 +149,7 @@ private get selectedTool(): string {
   }
 
   private bindMouseEvents() {
+    this.canvas.addEventListener("wheel", this.handleWheel, { passive: false });
     this.canvas.addEventListener("mousedown", this.handleMouseDown)
     this.canvas.addEventListener("mousemove", this.handleMouseMove)
     this.canvas.addEventListener("mouseup", this.handleMouseUp)
@@ -132,7 +157,7 @@ private get selectedTool(): string {
   }
 
   private handleMouseDown = (e: MouseEvent) => {
-    const { x, y } = this.getCanvasCoords(e)
+    const { x, y } = this.getMouseWorldPos(e)
     this.startX = x
     this.startY = y
     this.isDrawing = true
@@ -144,7 +169,7 @@ private get selectedTool(): string {
 
   private handleMouseMove = (e: MouseEvent) => {
     if (!this.isDrawing) return
-    const { x, y } = this.getCanvasCoords(e)
+    const { x, y } = this.getMouseWorldPos(e)
     const width = x - this.startX
     const height = y - this.startY
 
@@ -189,7 +214,7 @@ private get selectedTool(): string {
     if (!this.isDrawing) return
     this.isDrawing = false
 
-    const { x, y } = this.getCanvasCoords(e)
+    const { x, y } = this.getMouseWorldPos(e)
     const width = x - this.startX
     const height = y - this.startY
     let shape: Shape | null = null
@@ -224,7 +249,7 @@ private get selectedTool(): string {
     if (this.selectedTool !== "text" || !this.textInput) return
     if (!this.textInput.classList.contains("hidden")) return
 
-    const { x, y } = this.getCanvasCoords(e)
+    const { x, y } = this.getMouseWorldPos(e)
     e.preventDefault()
     this.isDrawing = false
 
@@ -257,18 +282,30 @@ private get selectedTool(): string {
     }
   }
 
-  private getCanvasCoords(e: MouseEvent) {
-    const rect = this.canvas.getBoundingClientRect()
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top }
-  }
+  private getMouseWorldPos(e: MouseEvent) {
+    const rect = this.canvas.getBoundingClientRect();
+    // 1. Get position relative to canvas (Screen Space)
+    const screenX = e.clientX - rect.left;
+    const screenY = e.clientY - rect.top;
+
+    // 2. Adjust for camera (World Space = Screen - Camera)
+    return { 
+        x: screenX - this.Camara.x, 
+        y: screenY - this.Camara.y 
+    };
+}
 }
 
 // ─── Module-level helpers ────────────────────────────────────────────────────
 
-function clearCtx(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, shapes: Shape[]) {
+function clearCtx(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, shapes: Shape[],Camara:camara) {
   ctx.clearRect(0, 0, canvas.width, canvas.height)
   ctx.fillStyle = "rgba(255,248,220,1)"
   ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+  ctx.save();
+
+  ctx.translate(Camara.x, Camara.y)
 
   for (const shape of shapes) {
     if (!shape) continue
@@ -306,6 +343,7 @@ function clearCtx(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, shap
         break
     }
   }
+  ctx.restore()
 }
 
 async function getExistingShapes(roomId: string): Promise<Shape[]> {

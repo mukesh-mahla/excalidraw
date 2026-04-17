@@ -25,6 +25,10 @@ export class DrawingCanvas {
   private redoStack: Shape[][] = []
 private currentTool: string = "circle"
 
+private isPanning = false
+private lastPanX = 0
+private lastPanY = 0
+
 setTool(tool: string) {
     this.currentTool = tool
 }
@@ -157,6 +161,12 @@ private get selectedTool(): string {
   }
 
   private handleMouseDown = (e: MouseEvent) => {
+    if (this.selectedTool === "hand") {
+    this.isPanning = true
+    this.lastPanX = e.clientX
+    this.lastPanY = e.clientY
+    return
+  }
     const { x, y } = this.getMouseWorldPos(e)
     this.startX = x
     this.startY = y
@@ -168,12 +178,28 @@ private get selectedTool(): string {
   }
 
   private handleMouseMove = (e: MouseEvent) => {
+      if (this.isPanning) {
+    const dx = e.clientX - this.lastPanX
+    const dy = e.clientY - this.lastPanY
+
+    this.Camara.x += dx
+    this.Camara.y += dy
+
+    this.lastPanX = e.clientX
+    this.lastPanY = e.clientY
+
+    this.render()
+    return
+  }
     if (!this.isDrawing) return
+    
     const { x, y } = this.getMouseWorldPos(e)
     const width = x - this.startX
     const height = y - this.startY
 
     this.render()
+    this.ctx.save()
+this.ctx.translate(this.Camara.x, this.Camara.y)
     this.ctx.strokeStyle = "rgba(75,85,99,1)"
 
     switch (this.selectedTool) {
@@ -208,11 +234,13 @@ private get selectedTool(): string {
         this.ctx.closePath()
         break
     }
+    this.ctx.restore()
   }
 
   private handleMouseUp = (e: MouseEvent) => {
     if (!this.isDrawing) return
     this.isDrawing = false
+    this.isPanning=false
 
     const { x, y } = this.getMouseWorldPos(e)
     const width = x - this.startX
@@ -252,10 +280,11 @@ private get selectedTool(): string {
     const { x, y } = this.getMouseWorldPos(e)
     e.preventDefault()
     this.isDrawing = false
-
+const screenX = x + this.Camara.x
+const screenY = y + this.Camara.y
     Object.assign(this.textInput.style, {
-      left: `${x}px`,
-      top: `${y}px`,
+      left: `${screenX}px`,
+      top: `${screenY}px`,
       font: "20px Arial",
       lineHeight: "20px",
       color: "black",
@@ -329,6 +358,7 @@ function clearCtx(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, shap
         ctx.closePath()
         break
       case "pencil":
+        if (shape.points.length === 0) break
         ctx.beginPath()
         ctx.moveTo(shape.points[0].x, shape.points[0].y)
         for (let i = 1; i < shape.points.length; i++) ctx.lineTo(shape.points[i].x, shape.points[i].y)

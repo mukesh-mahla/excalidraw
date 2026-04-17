@@ -3,7 +3,7 @@ import { Circle, Minus, Palette, Pencil, RectangleHorizontalIcon, Redo, Type, Un
 import { useEffect, useRef, useState } from "react"
 import { ButtonIcon } from "./buttonIcon"
 import { Hand } from "lucide-react"
-type ShapeTool = "line" | "rect" | "circle" | "pencil" | "color" | "text"
+type ShapeTool = "drag" | "line" | "rect" | "circle" | "pencil" | "color" | "text"
 
 export function MainCanvas({ roomId, socket }: { roomId: string; socket: WebSocket }) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -36,7 +36,7 @@ export function MainCanvas({ roomId, socket }: { roomId: string; socket: WebSock
         const canvas = canvasRef.current
         if (!canvas || !socket) return
 
-        DrawingCanvas.init(canvas, roomId, socket, textInputRef.current,cameraRef.current).then((instance) => {
+        DrawingCanvas.init(canvas, roomId, socket, textInputRef.current, cameraRef.current).then((instance) => {
             drawingRef.current = instance
             instance.setTool(selectedTool)
         })
@@ -70,12 +70,13 @@ function Topbar({
 }) {
     return (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 flex gap-2 bg-gray-800 p-2 rounded-lg shadow-lg max-w-full overflow-x-auto">
-            <ButtonIcon activated={selectedTool === "text"}   icon={<Type />}                     onclick={() => setSelectedTool("text")}   />
-            <ButtonIcon activated={selectedTool === "pencil"} icon={<Pencil />}                   onclick={() => setSelectedTool("pencil")} />
-            <ButtonIcon activated={selectedTool === "line"}   icon={<Minus />}                    onclick={() => setSelectedTool("line")}   />
-            <ButtonIcon activated={selectedTool === "rect"}   icon={<RectangleHorizontalIcon />}  onclick={() => setSelectedTool("rect")}   />
-            <ButtonIcon activated={selectedTool === "circle"} icon={<Circle />}                   onclick={() => setSelectedTool("circle")} />
-            <ButtonIcon activated={selectedTool === "color"}  icon={<Palette />}                  onclick={() => setSelectedTool("color")}  />
+            <ButtonIcon activated={selectedTool === "drag"} icon={<Hand />} onclick={() => setSelectedTool("drag")} />
+            <ButtonIcon activated={selectedTool === "text"} icon={<Type />} onclick={() => setSelectedTool("text")} />
+            <ButtonIcon activated={selectedTool === "pencil"} icon={<Pencil />} onclick={() => setSelectedTool("pencil")} />
+            <ButtonIcon activated={selectedTool === "line"} icon={<Minus />} onclick={() => setSelectedTool("line")} />
+            <ButtonIcon activated={selectedTool === "rect"} icon={<RectangleHorizontalIcon />} onclick={() => setSelectedTool("rect")} />
+            <ButtonIcon activated={selectedTool === "circle"} icon={<Circle />} onclick={() => setSelectedTool("circle")} />
+            <ButtonIcon activated={selectedTool === "color"} icon={<Palette />} onclick={() => setSelectedTool("color")} />
             <ButtonIcon activated={false} icon={<Undo />} onclick={() => drawingRef.current?.undo()} />
             <ButtonIcon activated={false} icon={<Redo />} onclick={() => drawingRef.current?.redo()} />
         </div>

@@ -13,12 +13,20 @@ type Shape =
       endAngle: number;
     }
   | { type: "line"; startx: number; starty: number; endx: number; endy: number }
-  | { type: "pencil"; points: { x: number; y: number }[] }
+  | {
+      type: "pencil";
+      points: { x: number; y: number }[];
+      minX: number;
+      maxX: number;
+      minY: number;
+      maxY: number;
+    }
   | { type: "text"; x: number; y: number; value: string };
 
 interface camara {
   x: number;
   y: number;
+  scale: number;
 }
 
 export class DrawingCanvas {
@@ -93,6 +101,28 @@ export class DrawingCanvas {
     this.render();
   };
 
+  private zoom(factor: number, centerX?: number, centerY?: number) {
+    // default → center of canvas
+    const cx = centerX ?? this.canvas.width / 2;
+    const cy = centerY ?? this.canvas.height / 2;
+
+    // convert screen → world
+    const worldX = (cx - this.Camara.x) / this.Camara.scale;
+    const worldY = (cy - this.Camara.y) / this.Camara.scale;
+
+    // apply zoom
+    this.Camara.scale *= factor;
+
+    // clamp
+    this.Camara.scale = Math.max(0.1, Math.min(5, this.Camara.scale));
+
+    // adjust camera to keep center stable
+    this.Camara.x = cx - worldX * this.Camara.scale;
+    this.Camara.y = cy - worldY * this.Camara.scale;
+
+    this.render();
+  }
+
   // ─── Public API ───────────────────────────────────────────────────────────
 
   undo() {
@@ -118,6 +148,14 @@ export class DrawingCanvas {
     this.canvas.removeEventListener("mouseup", this.handleMouseUp);
     this.canvas.removeEventListener("dblclick", this.handleDoubleClick);
   }
+  zoomIn() {
+    this.zoom(1.05);
+  }
+
+  zoomOut() {
+    this.zoom(1 / 1.05);
+  }
+  // ──────────────────────────────────────────────────────────────
 
   // ─── Private helpers ──────────────────────────────────────────────────────
 
@@ -215,7 +253,7 @@ export class DrawingCanvas {
 
     this.render();
     this.ctx.save();
-    this.ctx.translate(this.Camara.x, this.Camara.y);
+
     this.ctx.strokeStyle = "rgba(75,85,99,1)";
 
     switch (this.selectedTool) {
@@ -254,13 +292,12 @@ export class DrawingCanvas {
   };
 
   private handleMouseUp = (e: MouseEvent) => {
-    if(this.selectedTool === "drag"){
-      this.canvas.style.cursor = "crosshair"
+    if (this.selectedTool === "drag") {
+      this.canvas.style.cursor = "crosshair";
       this.isPanning = false;
     }
     if (!this.isDrawing) return;
     this.isDrawing = false;
-    
 
     const { x, y } = this.getMouseWorldPos(e);
     const width = x - this.startX;
@@ -290,10 +327,24 @@ export class DrawingCanvas {
           endy: y,
         };
         break;
-      case "pencil":
-        shape = { type: "pencil", points: this.currentPoints };
+      case "pencil": {
+        const points = this.currentPoints;
+
+        const xs = points.map((p) => p.x);
+        const ys = points.map((p) => p.y);
+
+        shape = {
+          type: "pencil",
+          points,
+          minX: Math.min(...xs),
+          maxX: Math.max(...xs),
+          minY: Math.min(...ys),
+          maxY: Math.max(...ys),
+        };
+
         this.currentPoints = [];
         break;
+      }
     }
 
     if (shape) this.addShape(shape);
@@ -306,8 +357,8 @@ export class DrawingCanvas {
     const { x, y } = this.getMouseWorldPos(e);
     e.preventDefault();
     this.isDrawing = false;
-    const screenX = x + this.Camara.x;
-    const screenY = y + this.Camara.y;
+    const screenX = x * this.Camara.scale + this.Camara.x;
+    const screenY = y * this.Camara.scale + this.Camara.y;
     Object.assign(this.textInput.style, {
       left: `${screenX}px`,
       top: `${screenY}px`,
@@ -350,8 +401,8 @@ export class DrawingCanvas {
 
     // 2. Adjust for camera (World Space = Screen - Camera)
     return {
-      x: screenX - this.Camara.x,
-      y: screenY - this.Camara.y,
+      x: (screenX - this.Camara.x) / this.Camara.scale,
+      y: (screenY - this.Camara.y) / this.Camara.scale,
     };
   }
 }
@@ -364,16 +415,26 @@ function clearCtx(
   shapes: Shape[],
   Camara: camara,
 ) {
+  const padding = 100;
+
+  const viewLeft = -Camara.x / Camara.scale - padding;
+  const viewTop = -Camara.y / Camara.scale - padding;
+
+  const viewRight = viewLeft + canvas.width / Camara.scale + padding * 2;
+  const viewBottom = viewTop + canvas.height / Camara.scale + padding * 2;
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "rgba(255,248,220,1)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.save();
-
-  ctx.translate(Camara.x, Camara.y);
+  ctx.setTransform(Camara.scale, 0, 0, Camara.scale, Camara.x, Camara.y);
 
   for (const shape of shapes) {
     if (!shape) continue;
+    if (!isVisible(shape, viewLeft, viewTop, viewRight, viewBottom)) {
+      continue; //  skip rendering
+    }
     ctx.strokeStyle = "rgba(75,85,99,1)";
 
     switch (shape.type) {
@@ -418,4 +479,56 @@ async function getExistingShapes(roomId: string): Promise<Shape[]> {
   return res.data.message.map(
     (x: { message: string }) => JSON.parse(x.message).shape,
   );
+}
+
+function isVisible(
+  shape: Shape,
+  left: number,
+  top: number,
+  right: number,
+  bottom: number,
+): boolean {
+  switch (shape.type) {
+    case "rect": {
+      const minX = Math.min(shape.x, shape.x + shape.width);
+      const maxX = Math.max(shape.x, shape.x + shape.width);
+      const minY = Math.min(shape.y, shape.y + shape.height);
+      const maxY = Math.max(shape.y, shape.y + shape.height);
+
+      return !(maxX < left || minX > right || maxY < top || minY > bottom);
+    }
+
+    case "circle":
+      return !(
+        shape.centerX + shape.radius < left ||
+        shape.centerX - shape.radius > right ||
+        shape.centerY + shape.radius < top ||
+        shape.centerY - shape.radius > bottom
+      );
+
+    case "line":
+      return !(
+        Math.max(shape.startx, shape.endx) < left ||
+        Math.min(shape.startx, shape.endx) > right ||
+        Math.max(shape.starty, shape.endy) < top ||
+        Math.min(shape.starty, shape.endy) > bottom
+      );
+
+    case "pencil":
+      return !(
+        shape.maxX < left ||
+        shape.minX > right ||
+        shape.maxY < top ||
+        shape.minY > bottom
+      );
+
+    case "text":
+      const padding = 50;
+      return !(
+        shape.x + padding < left ||
+        shape.x - padding > right ||
+        shape.y + padding < top ||
+        shape.y - padding > bottom
+      );
+  }
 }

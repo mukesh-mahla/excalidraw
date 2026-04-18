@@ -97,7 +97,7 @@ export class DrawingCanvas {
     // Update camera coordinates
     this.Camara.x -= e.deltaX;
     this.Camara.y -= e.deltaY;
-
+    this.onZoomChangeCallback?.(this.Camara.scale);
     this.render();
   };
 
@@ -119,9 +119,10 @@ export class DrawingCanvas {
     // adjust camera to keep center stable
     this.Camara.x = cx - worldX * this.Camara.scale;
     this.Camara.y = cy - worldY * this.Camara.scale;
-
+    this.onZoomChangeCallback?.(this.Camara.scale);
     this.render();
   }
+  private onZoomChangeCallback: ((z: number) => void) | null = null;
 
   // ─── Public API ───────────────────────────────────────────────────────────
 
@@ -154,6 +155,29 @@ export class DrawingCanvas {
 
   zoomOut() {
     this.zoom(1 / 1.05);
+  }
+
+  resetZoom() {
+    const cx = this.canvas.width / 2;
+    const cy = this.canvas.height / 2;
+
+    // world point currently at screen center
+    const worldX = (cx - this.Camara.x) / this.Camara.scale;
+    const worldY = (cy - this.Camara.y) / this.Camara.scale;
+
+    // reset scale to 1
+    this.Camara.scale = 1;
+
+    // keep that same world point at screen center
+    this.Camara.x = cx - worldX;
+    this.Camara.y = cy - worldY;
+
+    this.onZoomChangeCallback?.(1);
+    this.render();
+  }
+  // Public method to register the callback
+  onZoomChange(cb: (z: number) => void) {
+    this.onZoomChangeCallback = cb;
   }
   // ──────────────────────────────────────────────────────────────
 
@@ -254,6 +278,14 @@ export class DrawingCanvas {
     this.render();
     this.ctx.save();
 
+    this.ctx.setTransform(
+      this.Camara.scale,
+      0,
+      0,
+      this.Camara.scale,
+      this.Camara.x,
+      this.Camara.y,
+    );
     this.ctx.strokeStyle = "rgba(75,85,99,1)";
 
     switch (this.selectedTool) {

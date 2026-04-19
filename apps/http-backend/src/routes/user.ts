@@ -1,116 +1,136 @@
-import express, { Router }  from "express";
-import bcrypt from "bcrypt"
-const userRouter:Router = express.Router()
-import jwt from "jsonwebtoken"
-import  {JWT_SECERET}  from "@repo/backend-common";
+import express, { Router } from "express";
+import bcrypt from "bcrypt";
+const userRouter: Router = express.Router();
+import jwt from "jsonwebtoken";
+import { JWT_SECERET } from "@repo/backend-common";
 import { userAuth } from "../middleware.js";
-import {CreateUserSchema,CreateSigninSchema,CreateRoomSchema} from "@repo/common"
-import {prisma} from "@repo/db"
+import {
+  CreateUserSchema,
+  CreateSigninSchema,
+  CreateRoomSchema,
+} from "@repo/common";
+import { prisma } from "@repo/db";
 
-userRouter.post("/signup",async(req,res)=>{
-    const result = CreateUserSchema.safeParse(req.body)
-    if(result.error){
-        console.log(result.error)
-        return res.json({msg:"wrong credential"})
-    }
-    console.log("Received body:", req.body);
-    const {userName,email,Password} = result.data
-    if(!userName || !email || !Password){
-        return res.json({msg:"incomplete credential"})
-    }
-    const hashPassword = await bcrypt.hash(Password,10)
-  try{
-  const user = await prisma.user.create({
-        data:{
-            userName,
-            email,
-            Password:hashPassword
-        }
-    })
+userRouter.post("/signup", async (req, res) => {
+  const result = CreateUserSchema.safeParse(req.body);
+  if (result.error) {
+    console.log(result.error);
+    return res.json({ msg: "wrong credential" });
+  }
+  console.log("Received body:", req.body);
+  const { userName, email, Password } = result.data;
+  if (!userName || !email || !Password) {
+    return res.json({ msg: "incomplete credential" });
+  }
+  const hashPassword = await bcrypt.hash(Password, 10);
+  try {
+    const user = await prisma.user.create({
+      data: {
+        userName,
+        email,
+        Password: hashPassword,
+      },
+    });
 
-    return res.json({msg:"signed up succesfully",userId:user.id})
-}catch(e){
-    console.log(e)
-    res.status(400).json({message:"something is wrong"})
-}
+    return res.json({ msg: "signed up succesfully", userId: user.id });
+  } catch (e) {
+    console.log(e);
+    res.status(400).json({ message: "something is wrong" });
+  }
+});
 
-})
+userRouter.post("/signin", async (req, res) => {
+  const result = CreateSigninSchema.safeParse(req.body);
+  if (result.error) {
+    return res.json({ msg: "wrong creddential" });
+  }
+  console.log("Received body:", req.body);
+  const { email, Password } = result.data;
+  if (!email || !Password) {
+    return res.json({ msg: "incomplete credential" });
+  }
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
 
-userRouter.post("/signin",async(req,res)=>{
-    const result = CreateSigninSchema.safeParse(req.body)
-    if(result.error){
-        return res.json({msg:"wrong creddential"})
-    }
-    console.log("Received body:", req.body);
-    const {email,Password} = result.data
-    if( !email || !Password){
-        return res.json({msg:"incomplete credential"})
-    }
-      const user =await prisma.user.findUnique({
-        where:{email}
-    })
+  if (!user) {
+    return res.json({ msg: "user not found" });
+  }
 
-      if(!user){return res.json({msg:"user not found"})}
+  const password = await bcrypt.compare(Password, user.Password);
+  if (password) {
+    const token = jwt.sign({ id: user.id }, JWT_SECERET);
+    return res.json({ msg: "signed in succesfully", token: token });
+  } else {
+    res.json({ msg: "wrong credential" });
+  }
+});
 
-     const password = await bcrypt.compare(Password,user.Password)
-      if(password){
-             const token = jwt.sign({id:user.id},JWT_SECERET)
-             return res.json({msg:"signed in succesfully",token:token})
-        }
-        else{
-            res.json({msg:"wrong credential"})
-        }
+userRouter.post("/room", userAuth, async (req, res) => {
+  const result = CreateRoomSchema.safeParse(req.body);
+  if (!result.success) {
+    console.log(result.error);
+    return res.json({ msg: "wrong credential" });
+  }
+  //@ts-ignore
+  const userId = req.userId;
+  console.log("got user id");
+  try {
+    const room = await prisma.room.create({
+      data: {
+        slug: result.data.slug,
+        adminId: userId,
+      },
+    });
 
-})
+    res.json({ roomId: room.id });
+  } catch (e) {
+    res.json({ msg: "room already exist" });
+  }
+});
 
-userRouter.post("/room",userAuth,async(req,res)=>{
-    const result = CreateRoomSchema.safeParse(req.body)
-    if(!result.success){
-        console.log(result.error)
-        return res.json({msg:"wrong credential"})
-    } 
-             //@ts-ignore
-         const userId = req.userId
-         console.log("got user id")
-         try{
-        const room = await prisma.room.create({
-            data:{
-             slug:result.data.slug,
-             adminId:userId
-            }
-         })
+userRouter.get("/chats/:roomId", async (req, res) => {
+  const roomId = Number(req.params.roomId);
+  const message = await prisma.chat.findMany({
+    where: {
+      roomId: roomId,
+    },
+    orderBy: {
+      id: "desc",
+    },
+    take: 10000,
+  });
+  res.json({ message });
+});
 
-           res.json({roomId:room.id})
-        }catch(e){
-            res.json({msg:"room already exist"})
-        }
-        })
+userRouter.get("/chats/room/:slug", async (req, res) => {
+  const slug = req.params.slug;
 
+  const room = await prisma.room.findFirst({
+    where: {
+      slug,
+    },
+  });
 
-        userRouter.get("/chats/:roomId",async(req,res)=>{
-            const roomId = Number(req.params.roomId)
-            const message = await prisma.chat.findMany({
-                where:{
-                    roomId:roomId
-                },
-                orderBy:{
-                    id:"desc"
-                },
-                take:10000
-            })
-            res.json({message})
-        })
+  res.json({ id: room?.id });
+});
 
-        
-        userRouter.get("/chats/room/:slug",async(req,res)=>{
-            const slug = req.params.slug
-            
-            const room = await prisma.room.findFirst({
-                where:{
-                    slug
-                }
-            })
-           
-            res.json({id:room?.id})
-        })
-export default userRouter
+userRouter.delete("/chat/delete/:id", async (req, res) => {
+  const id = Number(req.query.id);
+  if (!id) {
+    return res.json({ message: "id is requires" });
+  }
+
+  const chat = prisma.chat.findFirst({
+    where: { id: id,roomId:id },
+
+  });
+
+  if (!chat) {
+    return res.json({ message: "shape doesnt exist" });
+  }
+
+  return res.json({ message: "shape deleted" });
+});
+
+export default userRouter;

@@ -245,6 +245,9 @@ export class DrawingCanvas {
       return;
     }
     if (this.selectedTool === "drag") return;
+    if (this.selectedTool === "erase") {
+      return;
+    }
     const { x, y } = this.getMouseWorldPos(e);
     this.startX = x;
     this.startY = y;
@@ -270,6 +273,10 @@ export class DrawingCanvas {
       return;
     }
     if (!this.isDrawing) return;
+
+    if (this.selectedTool === "erase") {
+      return;
+    }
 
     const { x, y } = this.getMouseWorldPos(e);
     const width = x - this.startX;
@@ -563,4 +570,23 @@ function isVisible(
         shape.y - padding > bottom
       );
   }
+}
+
+function isErase(
+  shape: Shape,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+): boolean {
+  switch (shape.type) {
+    case "rect":
+      return !(
+        x > shape.x ||
+        y > shape.y ||
+        width > shape.width ||
+        height > shape.height
+      );
+  }
+  return false;
 }

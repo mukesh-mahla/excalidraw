@@ -7,7 +7,7 @@ import { ZoomIn, ZoomOut } from "lucide-react"
 import { MousePointer2 } from "lucide-react"
 
 type ShapeTool = "drag" | "cursor" | "line" | "rect" | "circle" | "pencil" | "color" | "text"
-
+const  crosshair = `url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14'/%3E%3Cpath d='M12 5v14'/%3E%3C/svg%3E") 12 12, crosshair`;
 export function MainCanvas({ roomId, socket }: { roomId: string; socket: WebSocket }) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const textInputRef = useRef<HTMLTextAreaElement>(null)
@@ -91,7 +91,9 @@ export function MainCanvas({ roomId, socket }: { roomId: string; socket: WebSock
     const handleZoomReset = () => {
         drawingRef.current?.resetZoom?.()
         setZoom(100)
+    
     }
+
 
     return (
         <div className="h-screen w-screen overflow-hidden bg-[#16161e]">
@@ -107,7 +109,7 @@ export function MainCanvas({ roomId, socket }: { roomId: string; socket: WebSock
             <canvas
                 ref={canvasRef}
                 className="absolute inset-0"
-                style={{ cursor: selectedTool === "drag" ? "grab" : "crosshair" }}
+                style={{ cursor: selectedTool === "drag" ? "grab" : crosshair }}
             />
 
             <textarea
@@ -219,3 +221,7 @@ function Topbar({
         </div>
     )
 }
+
+
+
+

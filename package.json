@@ -15,7 +15,7 @@
   },
   "packageManager": "pnpm@10.17.0",
   "engines": {
-    "node": "20.x"
+    "node": "22.x"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
